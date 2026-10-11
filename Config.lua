@@ -310,6 +310,12 @@ local function Build()
 	_, y = Cycle(right, "Frame border color", y, ns.BORDER_COLOR_NAMES,
 		function() return ns.ColorName(db().overlay.borderColor) end,
 		function(v) db().overlay.borderColor = v end, "frames")
+	_, y = Check(right, "Fade markers while Swiftmend is on cooldown", y,
+		function() return db().overlay.fadeOnCooldown end,
+		function(v) db().overlay.fadeOnCooldown = v end, "frames")
+	_, y = Slider(right, "Marker opacity on cooldown", y, 0, 1, 0.05,
+		function() return db().overlay.cooldownAlpha end,
+		function(v) db().overlay.cooldownAlpha = v end, "frames", "%.2f")
 	_, y = Slider(right, "Marker size", y, 6, 40, 1,
 		function() return db().overlay.size end,
 		function(v) db().overlay.size = v end, "frames", nil, true)

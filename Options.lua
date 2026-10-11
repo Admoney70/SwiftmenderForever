@@ -25,6 +25,7 @@ local function Help()
 	print("  /sm spiral | timer     - toggle the marker's HoT spiral / countdown")
 	print("  /sm bordersize <1-10>  - raid-frame border thickness")
 	print("  /sm markerborder [1-10] - toggle the marker icon border, or set its thickness")
+	print("  /sm markerfade [0-1]   - toggle fading markers on Swiftmend cooldown, or set the opacity")
 	print("  /sm iconborder [1-10]  - toggle the target icon border, or set its thickness")
 	print("  /sm icontimer          - toggle the HoT time-left number on the target icon")
 	print("  /sm pattern add|remove|list <blizzard|buzzard> <lua pattern>")
@@ -142,6 +143,15 @@ local function Handler(msg)
 		db.overlay.borderSize = math.max(1, math.min(10, math.floor(tonumber(rest))))
 		ns.Frames:Relayout()
 		ns.Print("frame border thickness " .. db.overlay.borderSize)
+	elseif cmd == "markerfade" then
+		if tonumber(rest) then
+			db.overlay.cooldownAlpha = math.max(0, math.min(1, tonumber(rest)))
+			db.overlay.fadeOnCooldown = true
+		else
+			db.overlay.fadeOnCooldown = not db.overlay.fadeOnCooldown
+		end
+		ns.Frames:Refresh()
+		ns.Print(string.format("fade markers on cooldown %s (%.2f)", OnOff(db.overlay.fadeOnCooldown), db.overlay.cooldownAlpha))
 	elseif cmd == "markerborder" then
 		if tonumber(rest) then
 			db.overlay.iconBorderSize = math.max(1, math.min(10, math.floor(tonumber(rest))))

@@ -245,9 +245,20 @@ local function UpdateSpiral(o, unit, aura)
 	cd:SetShown(shown)
 end
 
+-- Swiftmend cooldown state, refreshed once per Refresh pass.
+local onCooldown = false
+
+-- Our overlay frame is addon-owned, so its alpha can change in combat and
+-- fades the native marker and borders inside it.
+local function ApplyFade(o)
+	local cfg = ns.db.overlay
+	if cfg.fadeOnCooldown and onCooldown then o:SetAlpha(cfg.cooldownAlpha) else o:SetAlpha(1) end
+end
+
 function Frames:UpdateFrame(frame)
 	local o = overlays[frame]
 	if not o then return end
+	ApplyFade(o)
 	local enabled = ns.db.overlay[o.provider]
 	local unit = enabled and frame:IsVisible() and FrameUnit(frame)
 	if not unit then
@@ -368,7 +379,12 @@ function Frames:Init()
 end
 
 function Frames:Refresh()
+	onCooldown = ns.Icon.SwiftmendOnCooldown()
 	for frame in pairs(overlays) do self:UpdateFrame(frame) end
+end
+
+function Frames:UpdateCooldown()
+	self:Refresh()
 end
 
 function Frames:RefreshUnit(unit)

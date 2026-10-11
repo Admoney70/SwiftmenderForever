@@ -7,7 +7,8 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
 
 - **Raid frame markers:** a Swiftmend icon on every group member who can be Swiftmended. The icon has
   its own border (black, 1px by default), and the whole raid frame gets a border too (green, 2px).
-  Each border can be turned off and has its own thickness and colour. The icon can show a spiral and a countdown for the HoT's remaining duration;
+  Each border can be turned off and has its own thickness and colour.
+  - Markers and borders fade while Swiftmend is on cooldown (optional, adjustable opacity). The icon can show a spiral and a countdown for the HoT's remaining duration;
   each can be turned off.
   - Blizzard raid and party frames (`CompactRaidFrame…`, `CompactPartyFrame…`, `CompactRaidGroup…`)
   - [Buzzard Frames](https://www.curseforge.com/wow/addons/buzzard-frames) (frames named `Buzzard…` / `BF_…`)
@@ -69,6 +70,7 @@ The target icon starts **unlocked**. Drag it where you want it, then right-click
 | `/sm anchor <point> [x y]` | Move the marker, e.g. `/sm anchor TOPRIGHT -2 -2` |
 | `/sm offset <x> <y>` | Set the marker's offset in pixels from its anchor, e.g. `/sm offset 4 -6` |
 | `/sm marker` / `/sm border` | Turn the marker icon or the raid frame border on or off |
+| `/sm markerfade [0-1]` | Turn marker fading on Swiftmend cooldown on or off, or set its opacity |
 | `/sm markerborder [1-10]` | Turn the marker icon's border on or off, or set its thickness |
 | `/sm bordersize <1-10>` | Set the raid frame border thickness (default 2) |
 | `/sm icontimer` | Show or hide the HoT time left on the target icon |

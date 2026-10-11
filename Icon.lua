@@ -412,6 +412,12 @@ function Icon:UpdateCooldown()
 	self:Refresh()
 end
 
+-- Shared with the raid-frame markers.
+function Icon.SwiftmendOnCooldown()
+	if not button then return false end
+	return OnCooldown(SwiftmendSpell())
+end
+
 function Icon:Init()
 	Create()
 	self:Layout()

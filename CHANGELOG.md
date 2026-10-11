@@ -1,5 +1,10 @@
 # Swiftmender Forever
 
+## 1.1.0
+
+- New option: fade the raid-frame markers and borders while Swiftmend is on cooldown, with an adjustable
+  opacity (settings window or `/sm markerfade [0-1]`). On by default at 0.35; works in combat.
+
 ## 1.0.1
 
 - The target icon keeps its border while greyed out (no target, no HoT, or unusable).
