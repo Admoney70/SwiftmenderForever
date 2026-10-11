@@ -7,6 +7,7 @@
 ## IconTexture: Interface\Icons\INV_Relics_IdolofRejuvenation
 
 Core.lua
+Native.lua
 Frames.lua
 Icon.lua
 Config.lua

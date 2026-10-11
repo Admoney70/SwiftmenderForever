@@ -1,7 +1,8 @@
--- Swiftmender Forever: draggable alert icon.
--- Lights up when your friendly target (including yourself) can be Swiftmended,
+-- Swiftmender Forever: draggable target icon.
+-- Lights up when your target (including yourself) can be Swiftmended,
 -- showing their name and the HoT time left. Fades while Swiftmend is on
--- cooldown.
+-- cooldown. The lit icon is a native aura sensor on "target" (Native.lua),
+-- so it works in combat; our own frame only handles dragging and the fade.
 
 local ADDON, ns = ...
 local IsSecret = ns.IsSecret
@@ -20,6 +21,31 @@ local function ApplyPosition()
 	local p = ns.db.icon.point
 	button:ClearAllPoints()
 	button:SetPoint(p[1] or "CENTER", UIParent, p[3] or "CENTER", p[4] or 0, p[5] or 0)
+end
+
+-- Styles the native slot button (see Native.lua for the rules).
+local function DecorateTarget(b)
+	button.native = b
+	if b.SetMouseClickEnabled then b:SetMouseClickEnabled(false) end
+	if b.SetMouseMotionEnabled then b:SetMouseMotionEnabled(false) end
+	b:ClearAllPoints()
+	b:SetAllPoints(button)
+	if not b.smIcon then
+		b.smIcon = b:CreateTexture(nil, "ARTWORK")
+		b.smIcon:SetAllPoints(b)
+		b.smIcon:SetTexture(ns.SpellTexture(ns.SPELLS.SWIFTMEND))
+		b.smIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+		local host = CreateFrame("Frame", nil, b)
+		host:SetAllPoints(b)
+		host:SetFrameLevel(b:GetFrameLevel() + 3)
+		b.smTimer = host:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+		b.smTimer:SetPoint("TOPLEFT", 3, -3)
+		b.smLabel = host:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+		b.smLabel:SetPoint("TOP", b, "BOTTOM", 0, -2)
+	end
+	b:SetDurationText(b.smTimer, ns.Native.TimerOptions())
+	-- the button is recreated for each new aura, so this follows target swaps
+	b.smLabel:SetText(UnitName("target"))
 end
 
 local function Create()
@@ -76,6 +102,12 @@ local function Create()
 		GameTooltip:Show()
 	end)
 	button:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
+	if ns.Native.Available() then
+		button.sensor = ns.Native.CreateSensor(button, "target", DecorateTarget)
+		-- our swipe would draw over empty space; keep it only as a cooldown probe
+		if button.sensor then button.cooldown:SetAlpha(0) end
+	end
 end
 
 function Icon:Layout()
@@ -129,6 +161,20 @@ function Icon:Refresh()
 	end
 	button:Show()
 
+	if button.sensor then
+		-- the native button shows itself when the target has the HoT; we only
+		-- fade the whole icon and show a drag placeholder while unlocked
+		button.tex:SetShown(not cfg.locked)
+		button.tex:SetDesaturated(true)
+		button.tex:SetAlpha(0.6)
+		button.label:SetText("")
+		button.timer:SetText("")
+		if OnCooldown() then button:SetAlpha(cfg.cooldownAlpha) else button:SetAlpha(1) end
+		return
+	end
+
+	button.tex:SetShown(true)
+	button.tex:SetAlpha(1)
 	local can, aura = false, nil
 	if FriendlyTarget() then
 		can, aura = ns.Evaluate("target")
@@ -150,7 +196,13 @@ function Icon:Refresh()
 	end
 end
 
-function Icon:RefreshUnit()
+function Icon:RefreshUnit(unit)
+	if button and button.sensor and unit == "target" then
+		ns.Native.Update(button.sensor)
+		if button.native and ns.Native.Mutable() then
+			button.native.smLabel:SetText(UnitName("target"))
+		end
+	end
 	self:Refresh()
 end
 

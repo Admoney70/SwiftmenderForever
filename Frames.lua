@@ -1,7 +1,9 @@
 -- Swiftmender Forever: raid-frame overlays.
 -- Puts a Swiftmend marker (icon + coloured border) on Blizzard compact
 -- raid/party frames and on Buzzard Frames whenever that unit can be
--- Swiftmended.
+-- Swiftmended. Uses a native aura sensor (Native.lua) so it keeps working in
+-- combat; the Lua aura scan below is only a fallback for clients without
+-- Blizzard_AuraContainer.
 
 local ADDON, ns = ...
 local IsSecret = ns.IsSecret
@@ -72,6 +74,76 @@ local function LayoutOverlay(o)
 	end
 end
 
+-- Styles the native slot button. Runs inside initializeFrame (every time
+-- Blizzard recreates the button) and on settings changes while mutable.
+local function DecorateNative(o, button)
+	local cfg = ns.db.overlay
+	o.button = button
+	if button.SetMouseClickEnabled then button:SetMouseClickEnabled(false) end
+	if button.SetMouseMotionEnabled then button:SetMouseMotionEnabled(false) end
+
+	if not button.smIcon then
+		button.smIcon = button:CreateTexture(nil, "ARTWORK")
+		button.smIcon:SetAllPoints(button)
+		button.smIcon:SetTexture(ns.SpellTexture(ns.SPELLS.SWIFTMEND))
+		button.smIcon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+		local spiral = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
+		spiral:SetAllPoints(button)
+		spiral:SetReverse(true)
+		spiral:SetDrawEdge(false)
+		spiral:SetDrawBling(false)
+		spiral:SetHideCountdownNumbers(true)
+		button.smSpiral = spiral
+
+		local textHost = CreateFrame("Frame", nil, button)
+		textHost:SetAllPoints(button)
+		textHost:SetFrameLevel(spiral:GetFrameLevel() + 2)
+		button.smTimer = textHost:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+		button.smTimer:SetPoint("CENTER", button, "CENTER", 0, 0)
+
+		button.smEdges = {}
+		for i = 1, 4 do
+			local t = button:CreateTexture(nil, "OVERLAY", nil, 6)
+			t:SetColorTexture(1, 1, 1, 1)
+			button.smEdges[i] = t
+		end
+	end
+
+	button:ClearAllPoints()
+	button:SetSize(cfg.size, cfg.size)
+	button:SetPoint(cfg.point, o, cfg.point, cfg.offsetX, cfg.offsetY)
+	button.smIcon:SetShown(cfg.showIcon)
+
+	if cfg.showIcon and cfg.showSpiral then
+		button.smSpiral:Show()
+		button:SetDurationCooldown(button.smSpiral)
+	else
+		button:ClearDurationCooldown()
+		button.smSpiral:Hide()
+	end
+	if cfg.showIcon and cfg.showTimer then
+		button.smTimer:Show()
+		button:SetDurationText(button.smTimer, ns.Native.TimerOptions())
+	else
+		button:ClearDurationText()
+		button.smTimer:Hide()
+	end
+
+	-- the border hangs off the native button (so it shares its visibility)
+	-- but outlines the whole raid frame
+	local r, g, b, a = unpack(cfg.borderColor)
+	local e, t = button.smEdges, 2
+	e[1]:ClearAllPoints(); e[1]:SetPoint("TOPLEFT", o); e[1]:SetPoint("TOPRIGHT", o); e[1]:SetHeight(t)
+	e[2]:ClearAllPoints(); e[2]:SetPoint("BOTTOMLEFT", o); e[2]:SetPoint("BOTTOMRIGHT", o); e[2]:SetHeight(t)
+	e[3]:ClearAllPoints(); e[3]:SetPoint("TOPLEFT", o); e[3]:SetPoint("BOTTOMLEFT", o); e[3]:SetWidth(t)
+	e[4]:ClearAllPoints(); e[4]:SetPoint("TOPRIGHT", o); e[4]:SetPoint("BOTTOMRIGHT", o); e[4]:SetWidth(t)
+	for i = 1, 4 do
+		e[i]:SetVertexColor(r, g, b, a)
+		e[i]:SetShown(cfg.showBorder)
+	end
+end
+
 local function CreateOverlay(frame, provider)
 	-- Overlays are plain (insecure) children: they never touch the
 	-- secure frame's attributes, so this is safe even in combat.
@@ -81,6 +153,13 @@ local function CreateOverlay(frame, provider)
 	o:SetFrameLevel(frame:GetFrameLevel() + 20)
 	o:EnableMouse(false)
 	o.provider = provider
+	o.smOverlay = true
+
+	if ns.Native.Available() then
+		o.smUnit = FrameUnit(frame) or "player"
+		o.sensor = ns.Native.CreateSensor(o, o.smUnit, function(button) DecorateNative(o, button) end)
+		if o.sensor then return o end
+	end
 
 	o.icon = o:CreateTexture(nil, "OVERLAY", nil, 7)
 	o.icon:SetTexture(ns.SpellTexture(ns.SPELLS.SWIFTMEND))
@@ -157,6 +236,15 @@ function Frames:UpdateFrame(frame)
 		o:Hide()
 		return
 	end
+	if o.sensor then
+		-- the native button shows itself; we only follow unit changes
+		if unit ~= o.smUnit then
+			o.smUnit = unit
+			ns.Native.SetUnit(o.sensor, unit)
+		end
+		o:Show()
+		return
+	end
 	local can, aura = ns.Evaluate(unit)
 	if can then
 		local left = ns.db.overlay.showTimer and ns.Remaining(aura)
@@ -171,7 +259,7 @@ end
 -- Walk a named frame and (for group headers) its unnamed children looking
 -- for unit buttons.
 local function Consider(frame, provider, depth)
-	if not frame or (frame.IsForbidden and frame:IsForbidden()) then return end
+	if not frame or frame.smOverlay or (frame.IsForbidden and frame:IsForbidden()) then return end
 	if FrameUnit(frame) then
 		Frames:Attach(frame, provider)
 	end
@@ -224,9 +312,22 @@ function Frames:Count()
 	return counts
 end
 
+local pendingRelayout
 function Frames:Relayout()
-	for _, o in pairs(overlays) do LayoutOverlay(o) end
+	local mutable = ns.Native.Mutable()
+	for _, o in pairs(overlays) do
+		if o.sensor then
+			if mutable and o.button then DecorateNative(o, o.button) end
+		else
+			LayoutOverlay(o)
+		end
+	end
+	pendingRelayout = not mutable or nil
 	self:Refresh()
+end
+
+function Frames:Flush()
+	if pendingRelayout and ns.Native.Mutable() then self:Relayout() end
 end
 
 -- module hooks ------------------------------------------------------------

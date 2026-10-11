@@ -14,8 +14,14 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
   (including yourself, when you target yourself) can be Swiftmended, showing their name and how long the HoT has left.
   - While Swiftmend is on cooldown, the icon fades and shows the cooldown swipe.
   - When your target can't be Swiftmended, the icon is hidden.
-- Works with the Midnight-style "secret value" addon API that WoW Forever uses. Auras are looked up by
-  spell name, which keeps working in combat, so every rank of Rejuvenation and Regrowth is detected.
+- **Works in combat.** WoW Forever uses the Midnight addon rules, which hide buffs from addons during
+  combat, encounters, M+ and PvP. Swiftmender doesn't try to read them. It gives Blizzard's own aura
+  display (`Blizzard_AuraContainer`) a slot that matches only Rejuvenation and Regrowth. The game then
+  shows and hides the marker, spiral and timer itself. All ranks are matched, plus any spell ID the
+  addon sees on a Rejuvenation or Regrowth out of combat.
+  - Settings you change during combat take effect when combat ends.
+  - `/sm status` shows "combat tracking: native" when this is active. On a client without the native
+    aura display, it falls back to out-of-combat-only tracking.
 
 ## Install
 
@@ -52,6 +58,7 @@ The target icon starts **unlocked**. Drag it where you want it, then right-click
 | `/sm spiral` / `/sm timer` | Turn the marker's HoT duration spiral or countdown timer on or off |
 | `/sm pattern add\|remove\|list <blizzard\|buzzard> <lua pattern>` | Change which frame names get markers |
 | `/sm frames` | List unit frames that don't have a marker yet, to help find their names |
+| `/sm legacy` | Switch to the old out-of-combat-only tracking, or back (reloads the UI) |
 | `/sm scan`, `/sm status`, `/sm reset` | Rescan for frames, show the current settings, or reset to defaults |
 
 `/sm help` lists these shortcuts in game.
@@ -66,7 +73,8 @@ Buzzard Frames' internal frame names aren't documented. If no markers appear on 
 
 ## Files
 
-- `Core.lua`: aura detection, settings, and the event and refresh loop
+- `Core.lua`: settings, out-of-combat aura checks, and the event and refresh loop
+- `Native.lua`: combat-safe HoT sensors built on Blizzard's native aura display
 - `Frames.lua`: raid frame markers for Blizzard and Buzzard frames
 - `Icon.lua`: the draggable alert icon
 - `Options.lua`: slash commands

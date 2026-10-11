@@ -15,6 +15,7 @@ ns.FALLBACK_ICON = "Interface\\Icons\\INV_Relics_IdolofRejuvenation"
 ns.defaults = {
 	onlyMine = false,        -- only count HoTs cast by you
 	updateInterval = 0.25,   -- seconds between full refreshes
+	forceLegacy = false,     -- skip the native (combat-safe) aura sensors
 	overlay = {
 		blizzard = true,
 		buzzard = true,
@@ -165,6 +166,7 @@ function ns.Evaluate(unit)
 			key = found and "REGROWTH"
 		end
 		can = found ~= nil
+		if found and ns.Native then ns.Native.Learn(found.spellId) end
 	end
 	cache[unit] = { can, found, key }
 	return can, found, key
@@ -205,8 +207,24 @@ local function Call(method, ...)
 end
 ns.Call = Call
 
+-- With native sensors nothing else reads auras, so every couple of seconds
+-- out of combat we scan the group once to learn the exact HoT spell ids this
+-- server uses (see Native.Learn).
+local lastLearn = 0
+local function LearnPass()
+	if GetTime() - lastLearn < 2 then return end
+	lastLearn = GetTime()
+	for _, unit in ipairs(ns.GroupUnits()) do ns.Evaluate(unit) end
+	ns.Evaluate("target")
+end
+
 function ns.RefreshAll()
 	wipe(cache)
+	if ns.Native.Mutable() then
+		ns.Native.Flush()
+		Call("Flush")
+		if ns.Native.Available() then LearnPass() end
+	end
 	Call("Refresh")
 end
 
@@ -230,6 +248,7 @@ events:SetScript("OnEvent", function(self, event, arg1)
 		SwiftmenderForeverDB = SwiftmenderForeverDB or {}
 		CopyDefaults(ns.defaults, SwiftmenderForeverDB)
 		ns.db = SwiftmenderForeverDB
+		ns.Native.Load()
 
 		Call("Init")
 

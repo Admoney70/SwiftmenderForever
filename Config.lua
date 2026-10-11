@@ -15,6 +15,9 @@ local function Changed(what)
 		ns.Icon:Layout()
 	elseif what == "frames" then
 		ns.Frames:Relayout()
+	elseif what == "filters" then
+		ns.Native.RefreshFilters()
+		ns.RefreshAll()
 	else
 		ns.RefreshAll()
 	end
@@ -227,7 +230,7 @@ local function Build()
 	y = Header(f, "General", y)
 	_, y = Check(f, "Only count my own Rejuvenation / Regrowth", y,
 		function() return db().onlyMine end,
-		function(v) db().onlyMine = v end)
+		function(v) db().onlyMine = v end, "filters")
 
 	local rescan = Button(f, "Rescan frames", 130)
 	rescan:SetPoint("TOPLEFT", 26, y - 4)
@@ -262,7 +265,8 @@ function Config:Sync()
 	window.blizz.label:SetText(string.format("Blizzard raid frames |cff888888(%d hooked)|r", counts.blizzard or 0))
 	window.buzz.label:SetText(string.format("Buzzard Frames |cff888888(%d hooked)|r", counts.buzzard or 0))
 	window.status:SetText("Knows Swiftmend: " .. (ns.KnowsSwiftmend() and "|cff33ff33yes|r" or "|cffff3333no|r")
-		.. "    |cff888888/sm help for commands|r")
+		.. "   Combat tracking: " .. (ns.Native.Available() and "|cff33ff33native|r" or "|cffff3333unavailable|r")
+		.. "\n|cff888888/sm help for commands|r")
 end
 
 function Config:Toggle()

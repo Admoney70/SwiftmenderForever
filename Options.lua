@@ -25,6 +25,7 @@ local function Help()
 	print("  /sm pattern add|remove|list <blizzard|buzzard> <lua pattern>")
 	print("  /sm frames             - list unit frames that aren't hooked yet")
 	print("  /sm scan               - rescan for raid frames")
+	print("  /sm legacy             - toggle the old out-of-combat-only tracking (reloads)")
 	print("  /sm status | reset")
 end
 
@@ -35,7 +36,8 @@ local function Status()
 		ns.db.icon.cooldownAlpha, OnOff(ns.db.onlyMine)))
 	ns.Print(string.format("Blizzard frames %s (%d hooked), Buzzard frames %s (%d hooked)",
 		OnOff(ns.db.overlay.blizzard), c.blizzard or 0, OnOff(ns.db.overlay.buzzard), c.buzzard or 0))
-	ns.Print("knows Swiftmend: " .. OnOff(ns.KnowsSwiftmend()))
+	ns.Print("knows Swiftmend: " .. OnOff(ns.KnowsSwiftmend())
+		.. ", combat tracking: " .. (ns.Native.Available() and "native" or "unavailable (out-of-combat only)"))
 end
 
 local function Pattern(args)
@@ -93,6 +95,7 @@ local function Handler(msg)
 		ns.Print(string.format("icon alpha on cooldown: %.2f", db.icon.cooldownAlpha))
 	elseif cmd == "mine" then
 		db.onlyMine = not db.onlyMine
+		ns.Native.RefreshFilters()
 		ns.RefreshAll()
 		ns.Print("only my HoTs " .. OnOff(db.onlyMine))
 	elseif cmd == "blizzard" or cmd == "buzzard" then
@@ -134,6 +137,9 @@ local function Handler(msg)
 		ns.Frames:ScanNow()
 		ns.RefreshAll()
 		Status()
+	elseif cmd == "legacy" then
+		db.forceLegacy = not db.forceLegacy
+		ReloadUI()
 	elseif cmd == "status" then
 		Status()
 	elseif cmd == "reset" then
