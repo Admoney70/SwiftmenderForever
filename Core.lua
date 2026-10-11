@@ -35,8 +35,8 @@ ns.defaults = {
 		locked = false,
 		size = 48,
 		onlyWhenKnown = true,  -- hide when you don't know Swiftmend
-		mode = "both",         -- "target", "group" or "both"
-		inactiveAlpha = 0,     -- alpha when nobody can be Swiftmended
+		inactiveAlpha = 0,     -- alpha when your target can't be Swiftmended
+		cooldownAlpha = 0.35,  -- alpha when they can but Swiftmend is on cooldown
 		point = { "CENTER", "UIParent", "CENTER", 0, -150 },
 	},
 }

@@ -9,10 +9,10 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
   Swiftmended, with a countdown for the last 10 seconds of the HoT.
   - Blizzard raid and party frames (`CompactRaidFrame…`, `CompactPartyFrame…`, `CompactRaidGroup…`)
   - [Buzzard Frames](https://www.curseforge.com/wow/addons/buzzard-frames) (frames named `Buzzard…` / `BF_…`)
-- **Draggable alert icon:** lights up and glows when someone can be Swiftmended.
-  - If your friendly **target** can be Swiftmended, it shows their name and how long the HoT has left.
-  - Otherwise it shows **how many** group members can be Swiftmended.
-  - It also shows Swiftmend's cooldown.
+- **Draggable alert icon:** tracks your **target** only. It lights up and glows when your friendly target
+  (never yourself) can be Swiftmended, showing their name and how long the HoT has left.
+  - While Swiftmend is on cooldown, the icon fades and shows the cooldown swipe.
+  - When your target can't be Swiftmended, the icon is hidden.
 - Works with the Midnight-style "secret value" addon API that WoW Forever uses. Auras are looked up by
   spell name, which keeps working in combat, so every rank of Rejuvenation and Regrowth is detected.
 
@@ -27,14 +27,22 @@ to the `## Interface:` line.
 
 ## Usage
 
-The alert icon starts **unlocked**. Drag it where you want it, then right-click it or type `/sm lock`.
+Type **`/sm`** (or `/swiftmender`) to open the settings window. You can also reach it from
+Esc > Options > AddOns > Swiftmender Forever. The window covers the target icon (show, lock, size,
+cooldown fade, reset position), the raid frame markers (Blizzard and Buzzard on/off, marker icon,
+border, size, position, offsets) and whether to count only your own HoTs.
+
+The target icon starts **unlocked**. Drag it where you want it, then right-click it or tick
+"Lock position".
+
+### Shortcut commands
 
 | Command | What it does |
 |---|---|
-| `/sm lock` / `/sm unlock` | Lock the alert icon, or unlock it so you can move it |
-| `/sm icon` | Turn the alert icon on or off |
-| `/sm iconsize <n>` | Set the alert icon size (default 48) |
-| `/sm mode target\|group\|both` | Choose what the icon watches: your target, your group, or both (default) |
+| `/sm lock` / `/sm unlock` | Lock the target icon, or unlock it so you can move it |
+| `/sm icon` | Turn the target icon on or off |
+| `/sm iconsize <n>` | Set the target icon size (default 48) |
+| `/sm fade <0-1>` | Set how faded the icon is while Swiftmend is on cooldown (default 0.35) |
 | `/sm mine` | Only count Rejuvenation and Regrowth that you cast |
 | `/sm blizzard` / `/sm buzzard` | Turn markers on or off for each raid frame addon |
 | `/sm size <n>` | Set the raid frame marker size (default 14) |
@@ -44,7 +52,7 @@ The alert icon starts **unlocked**. Drag it where you want it, then right-click 
 | `/sm frames` | List unit frames that don't have a marker yet, to help find their names |
 | `/sm scan`, `/sm status`, `/sm reset` | Rescan for frames, show the current settings, or reset to defaults |
 
-`/swiftmender` works as well as `/sm`.
+`/sm help` lists these shortcuts in game.
 
 ### If markers don't show on Buzzard Frames
 

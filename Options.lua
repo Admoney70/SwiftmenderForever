@@ -1,4 +1,5 @@
--- Swiftmender Forever: slash commands (/sm, /swiftmender).
+-- Swiftmender Forever: slash commands. /sm on its own opens the settings
+-- window; the subcommands below are shortcuts.
 
 local ADDON, ns = ...
 
@@ -10,11 +11,11 @@ local POINTS = {
 }
 
 local function Help()
-	ns.Print("commands:")
-	print("  /sm lock | unlock      - lock or move the alert icon")
-	print("  /sm icon               - toggle the alert icon")
-	print("  /sm iconsize <n>       - alert icon size (default 48)")
-	print("  /sm mode target|group|both - what the icon watches")
+	ns.Print("/sm opens the settings window. Shortcuts:")
+	print("  /sm lock | unlock      - lock or move the target icon")
+	print("  /sm icon               - toggle the target icon")
+	print("  /sm iconsize <n>       - target icon size (default 48)")
+	print("  /sm fade <0-1>         - icon alpha while Swiftmend is on cooldown")
 	print("  /sm mine               - only count your own Rejuv/Regrowth")
 	print("  /sm blizzard | buzzard - toggle overlays on those raid frames")
 	print("  /sm size <n>           - raid-frame marker size (default 14)")
@@ -28,9 +29,9 @@ end
 
 local function Status()
 	local c = ns.Frames:Count()
-	ns.Print(string.format("icon %s (%s, mode %s), only mine %s",
+	ns.Print(string.format("icon %s (%s, cooldown fade %.2f), only mine %s",
 		OnOff(ns.db.icon.enabled), ns.db.icon.locked and "locked" or "unlocked",
-		ns.db.icon.mode, OnOff(ns.db.onlyMine)))
+		ns.db.icon.cooldownAlpha, OnOff(ns.db.onlyMine)))
 	ns.Print(string.format("Blizzard frames %s (%d hooked), Buzzard frames %s (%d hooked)",
 		OnOff(ns.db.overlay.blizzard), c.blizzard or 0, OnOff(ns.db.overlay.buzzard), c.buzzard or 0))
 	ns.Print("knows Swiftmend: " .. OnOff(ns.KnowsSwiftmend()))
@@ -85,10 +86,10 @@ local function Handler(msg)
 	elseif cmd == "iconsize" and tonumber(rest) then
 		db.icon.size = math.max(16, math.min(200, tonumber(rest)))
 		ns.Icon:Layout()
-	elseif cmd == "mode" and (rest == "target" or rest == "group" or rest == "both") then
-		db.icon.mode = rest
+	elseif cmd == "fade" and tonumber(rest) then
+		db.icon.cooldownAlpha = math.max(0, math.min(1, tonumber(rest)))
 		ns.RefreshAll()
-		ns.Print("icon mode: " .. rest)
+		ns.Print(string.format("icon alpha on cooldown: %.2f", db.icon.cooldownAlpha))
 	elseif cmd == "mine" then
 		db.onlyMine = not db.onlyMine
 		ns.RefreshAll()
@@ -134,6 +135,8 @@ local function Handler(msg)
 		ns.Icon:Layout()
 		ns.Frames:Relayout()
 		ns.Print("settings reset")
+	elseif cmd == "" or cmd == "config" or cmd == "options" then
+		ns.Config:Toggle()
 	else
 		Help()
 	end

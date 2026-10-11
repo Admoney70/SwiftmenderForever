@@ -1,7 +1,7 @@
 -- Swiftmender Forever: draggable alert icon.
--- Lights up when your friendly target (or anyone in your group) can be
--- Swiftmended. Shows the target's name or the number of candidates, the
--- HoT time left, and Swiftmend's cooldown.
+-- Lights up when your friendly target (never yourself) can be Swiftmended,
+-- showing their name and the HoT time left. Fades while Swiftmend is on
+-- cooldown.
 
 local ADDON, ns = ...
 local IsSecret = ns.IsSecret
@@ -49,9 +49,6 @@ local function Create()
 	local text = CreateFrame("Frame", nil, button)
 	text:SetAllPoints()
 	text:SetFrameLevel(button.cooldown:GetFrameLevel() + 2)
-
-	button.count = text:CreateFontString(nil, "OVERLAY", "NumberFontNormalLarge")
-	button.count:SetPoint("BOTTOMRIGHT", -2, 2)
 
 	button.timer = text:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
 	button.timer:SetPoint("TOPLEFT", 3, -3)
@@ -102,7 +99,33 @@ local function FriendlyTarget()
 	local exists = UnitExists("target")
 	if IsSecret(exists) or not exists then return false end
 	local friend = UnitIsFriend("player", "target")
-	return not IsSecret(friend) and friend
+	if IsSecret(friend) or not friend then return false end
+	local isSelf = UnitIsUnit("target", "player")
+	return not IsSecret(isSelf) and not isSelf
+end
+
+-- True while Swiftmend is on its own cooldown (the global cooldown alone
+-- doesn't count).
+local function OnCooldown()
+	local info = C_Spell and C_Spell.GetSpellCooldown and C_Spell.GetSpellCooldown(ns.SPELLS.SWIFTMEND)
+	if IsSecret(info) then info = nil end
+	if info then
+		local start, duration, gcd = info.startTime, info.duration, info.isOnGCD
+		if not IsSecret(start) and not IsSecret(duration) and start and duration then
+			return duration > 1.5 and start + duration - GetTime() > 0
+		end
+		local active = info.isActive
+		if not IsSecret(active) and active ~= nil then
+			return active and not (not IsSecret(gcd) and gcd) or false
+		end
+	elseif GetSpellCooldown then
+		local start, duration = GetSpellCooldown(ns.SPELLS.SWIFTMEND)
+		if start and duration then
+			return duration > 1.5 and start + duration - GetTime() > 0
+		end
+	end
+	-- cooldown values are secret: fall back to whether the swipe is showing
+	return button.cooldown:IsShown() and true or false
 end
 
 function Icon:Refresh()
@@ -115,44 +138,24 @@ function Icon:Refresh()
 	end
 	button:Show()
 
-	local mode = cfg.mode
-	local targetCan, targetAura
-	if mode ~= "group" and FriendlyTarget() then
-		targetCan, targetAura = ns.Evaluate("target")
+	local can, aura = false, nil
+	if FriendlyTarget() then
+		can, aura = ns.Evaluate("target")
 	end
 
-	local count, firstUnit, firstAura = 0, nil, nil
-	if mode ~= "target" then
-		for _, unit in ipairs(ns.GroupUnits()) do
-			local can, aura = ns.Evaluate(unit)
-			if can then
-				count = count + 1
-				if not firstUnit then firstUnit, firstAura = unit, aura end
-			end
-		end
-	end
-
-	local active, labelUnit, aura
-	if targetCan then
-		active, labelUnit, aura = true, "target", targetAura
-	elseif count > 0 then
-		active, labelUnit, aura = true, (count == 1 and firstUnit or nil), firstAura
-	end
-
-	if active then
-		button:SetAlpha(1)
-		button.tex:SetDesaturated(false)
-		button.glow:Show()
-		button.count:SetText(count > 1 and count or "")
-		local name = labelUnit and UnitName(labelUnit)
-		button.label:SetText((not IsSecret(name) and name) or (count > 1 and (count .. " targets") or ""))
+	if can then
+		local onCD = OnCooldown()
+		if onCD then button:SetAlpha(cfg.cooldownAlpha) else button:SetAlpha(1) end
+		button.tex:SetDesaturated(onCD)
+		button.glow:SetShown(not onCD)
+		local name = UnitName("target")
+		button.label:SetText(not IsSecret(name) and name or "")
 		local left = ns.Remaining(aura)
 		button.timer:SetText(left and string.format("%d", left + 0.5) or "")
 	else
 		button:SetAlpha(cfg.locked and cfg.inactiveAlpha or 0.6)
 		button.tex:SetDesaturated(true)
 		button.glow:Hide()
-		button.count:SetText("")
 		button.label:SetText("")
 		button.timer:SetText("")
 	end
@@ -175,6 +178,7 @@ function Icon:UpdateCooldown()
 		local start, duration = GetSpellCooldown(id)
 		if start then button.cooldown:SetCooldown(start, duration) end
 	end
+	self:Refresh()
 end
 
 function Icon:Init()
