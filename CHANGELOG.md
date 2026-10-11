@@ -1,5 +1,9 @@
 # Swiftmender Forever
 
+## 1.0.1
+
+- The target icon keeps its border while greyed out (no target, no HoT, or unusable).
+
 ## 1.0.0
 
 First release for WoW Forever.
