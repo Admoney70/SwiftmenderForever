@@ -102,7 +102,8 @@ Releases are built by [BigWigsMods/packager](https://github.com/BigWigsMods/pack
    - the project ID is already in the TOC (`## X-Curse-Project-ID: 1739421`)
    - optionally add `CF_GAME_VERSIONS` (for example `12.1.5`) if the packager can't map
      `## Interface: 16001` to a CurseForge game version
-4. Bump `## Version:` in the TOC, add an entry to `CHANGELOG.md`, then tag and push:
+4. Bump `## Version:` in the TOC, add an entry to `CHANGELOG.md`, then either run the **Release**
+   workflow from the Actions tab with a version like `v1.0.1` (it creates the tag), or tag and push:
    `git tag v1.0.1 && git push origin v1.0.1`.
 
 ## Files

@@ -14,6 +14,10 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Tag to create and release, e.g. v1.0.1 (leave empty for a test build)"
+        required: false
 
 permissions:
   contents: write
@@ -28,6 +32,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # Manual runs can create the release tag themselves (the packager
+      # names and classifies the build from the tag on HEAD).
+      - name: Create tag
+        if: github.event_name == 'workflow_dispatch' && inputs.version != ''
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$VERSION" -m "Swiftmender Forever $VERSION"
+          git push origin "$VERSION"
 
       - name: Package and upload
         uses: BigWigsMods/packager@v2
