@@ -1,5 +1,14 @@
 # Swiftmender Forever
 
+## 1.2.0
+
+- New option: only show raid-frame markers when Swiftmend won't overheal (the player is missing at
+  least the heal amount). Off by default; turn it on in the settings window or with `/sm overheal`.
+  - The heal is estimated from your Rejuvenation tooltip (adjustable %), or set a fixed amount.
+  - Optionally counts incoming heals.
+  - Works in combat: Blizzard evaluates the hidden health against a per-player threshold built from
+    max health cached out of combat.
+
 ## 1.1.0
 
 - New option: fade the raid-frame markers and borders while Swiftmend is on cooldown, with an adjustable

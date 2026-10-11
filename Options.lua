@@ -26,6 +26,7 @@ local function Help()
 	print("  /sm bordersize <1-10>  - raid-frame border thickness")
 	print("  /sm markerborder [1-10] - toggle the marker icon border, or set its thickness")
 	print("  /sm markerfade [0-1]   - toggle fading markers on Swiftmend cooldown, or set the opacity")
+	print("  /sm overheal [amount|auto] - toggle 'only show when it won't overheal', or set the heal amount")
 	print("  /sm iconborder [1-10]  - toggle the target icon border, or set its thickness")
 	print("  /sm icontimer          - toggle the HoT time-left number on the target icon")
 	print("  /sm pattern add|remove|list <blizzard|buzzard> <lua pattern>")
@@ -143,6 +144,19 @@ local function Handler(msg)
 		db.overlay.borderSize = math.max(1, math.min(10, math.floor(tonumber(rest))))
 		ns.Frames:Relayout()
 		ns.Print("frame border thickness " .. db.overlay.borderSize)
+	elseif cmd == "overheal" then
+		if rest == "auto" then
+			db.overlay.overhealAmount, db.overlay.noOverheal = 0, true
+		elseif tonumber(rest) then
+			db.overlay.overhealAmount, db.overlay.noOverheal = math.max(0, math.floor(tonumber(rest))), true
+		else
+			db.overlay.noOverheal = not db.overlay.noOverheal
+		end
+		ns.Overheal.UpdateEstimate()
+		ns.Frames:Refresh()
+		local heal = ns.Overheal.HealAmount()
+		ns.Print("only show markers when it won't overheal: " .. OnOff(db.overlay.noOverheal)
+			.. " (heal " .. (heal and tostring(heal) or "unknown") .. ")")
 	elseif cmd == "markerfade" then
 		if tonumber(rest) then
 			db.overlay.cooldownAlpha = math.max(0, math.min(1, tonumber(rest)))

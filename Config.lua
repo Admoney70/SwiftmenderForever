@@ -15,6 +15,10 @@ local function Changed(what)
 		ns.Icon:Layout()
 	elseif what == "frames" then
 		ns.Frames:Relayout()
+	elseif what == "overheal" then
+		ns.Overheal.UpdateEstimate()
+		ns.Frames:Refresh()
+		Config:Sync()
 	elseif what == "filters" then
 		ns.Native.RefreshFilters()
 		ns.RefreshAll()
@@ -310,6 +314,23 @@ local function Build()
 	_, y = Cycle(right, "Frame border color", y, ns.BORDER_COLOR_NAMES,
 		function() return ns.ColorName(db().overlay.borderColor) end,
 		function(v) db().overlay.borderColor = v end, "frames")
+	_, y = Check(right, "Only show markers when Swiftmend won't overheal", y,
+		function() return db().overlay.noOverheal end,
+		function(v) db().overlay.noOverheal = v end, "overheal")
+	_, y = Check(right, "Count incoming heals (predicted health)", y,
+		function() return db().overlay.overhealPredicted end,
+		function(v) db().overlay.overhealPredicted = v end, "overheal")
+	_, y = Slider(right, "Heal estimate (% of Rejuvenation tooltip)", y, 50, 150, 5,
+		function() return db().overlay.overhealScale end,
+		function(v) db().overlay.overhealScale = v end, "overheal", "%d%%", true)
+	_, y = Slider(right, "Fixed heal amount (0 = use estimate)", y, 0, 10000, 50,
+		function() return db().overlay.overhealAmount end,
+		function(v) db().overlay.overhealAmount = v end, "overheal", nil, true)
+	f.overhealInfo = right:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+	f.overhealInfo:SetPoint("TOPLEFT", 26, y + 4)
+	f.overhealInfo:SetWidth(300)
+	f.overhealInfo:SetJustifyH("LEFT")
+	y = y - 16
 	_, y = Check(right, "Fade markers while Swiftmend is on cooldown", y,
 		function() return db().overlay.fadeOnCooldown end,
 		function(v) db().overlay.fadeOnCooldown = v end, "frames")
@@ -365,6 +386,9 @@ function Config:Sync()
 	local counts = ns.Frames:Count()
 	window.blizz.label:SetText(string.format("Blizzard raid frames |cff888888(%d hooked)|r", counts.blizzard or 0))
 	window.buzz.label:SetText(string.format("Buzzard Frames |cff888888(%d hooked)|r", counts.buzzard or 0))
+	local est, heal = ns.Overheal.Estimate(), ns.Overheal.HealAmount()
+	window.overhealInfo:SetText(string.format("Rejuvenation tooltip: %s   Heal used: %s",
+		est and tostring(est) or "unknown", heal and tostring(heal) or "unknown (gate off)"))
 	window.status:SetText("Knows Swiftmend: " .. (ns.KnowsSwiftmend() and "|cff33ff33yes|r" or "|cffff3333no|r")
 		.. "   Combat tracking: " .. (ns.Native.Available() and "|cff33ff33native|r" or "|cffff3333unavailable|r")
 		.. "\n|cff888888/sm help for commands|r")

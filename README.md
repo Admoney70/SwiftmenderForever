@@ -10,6 +10,10 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
   Each border can be turned off and has its own thickness and colour. The icon can show a spiral and
   a countdown for the HoT's remaining duration; each can be turned off.
   - Markers and borders fade while Swiftmend is on cooldown (optional, adjustable opacity).
+  - Optional overheal filter: only show a marker when the player is missing at least as much health as
+    Swiftmend would heal. The heal is estimated from your Rejuvenation tooltip (scale it, or set a fixed
+    amount) and can count incoming heals. It works in combat by turning the heal into a health-percent
+    threshold per player, using max health remembered from out of combat.
   - Blizzard raid and party frames (`CompactRaidFrame…`, `CompactPartyFrame…`, `CompactRaidGroup…`)
   - [Buzzard Frames](https://www.curseforge.com/wow/addons/buzzard-frames) (frames named `Buzzard…` / `BF_…`)
 - **Draggable alert icon:** tracks your **target** only. It lights up when your friendly target
@@ -70,6 +74,7 @@ The target icon starts **unlocked**. Drag it where you want it, then right-click
 | `/sm anchor <point> [x y]` | Move the marker, e.g. `/sm anchor TOPRIGHT -2 -2` |
 | `/sm offset <x> <y>` | Set the marker's offset in pixels from its anchor, e.g. `/sm offset 4 -6` |
 | `/sm marker` / `/sm border` | Turn the marker icon or the raid frame border on or off |
+| `/sm overheal [amount\|auto]` | Turn the overheal filter on or off, or set a fixed heal amount (`auto` = tooltip estimate) |
 | `/sm markerfade [0-1]` | Turn marker fading on Swiftmend cooldown on or off, or set its opacity |
 | `/sm markerborder [1-10]` | Turn the marker icon's border on or off, or set its thickness |
 | `/sm bordersize <1-10>` | Set the raid frame border thickness (default 2) |
@@ -112,6 +117,7 @@ Releases are built by [BigWigsMods/packager](https://github.com/BigWigsMods/pack
 
 - `Core.lua`: settings, out-of-combat aura checks, and the event and refresh loop
 - `Native.lua`: combat-safe HoT sensors built on Blizzard's native aura display
+- `Overheal.lua`: the "won't overheal" marker filter
 - `Frames.lua`: raid frame markers for Blizzard and Buzzard frames
 - `Icon.lua`: the draggable alert icon
 - `Options.lua`: slash commands

@@ -132,7 +132,11 @@ local function CreateOverlay(frame, provider)
 
 	if ns.Native.Available() then
 		o.smUnit = FrameUnit(frame) or "player"
-		o.sensor = ns.Native.CreateSensor(o, o.smUnit, function(button) DecorateNative(o, button) end)
+		-- the overheal gate sits between our overlay (cooldown fade) and the
+		-- native sensor; its alpha may be a secret curve result
+		o.gate = CreateFrame("Frame", nil, o)
+		o.gate:SetAllPoints(o)
+		o.sensor = ns.Native.CreateSensor(o.gate, o.smUnit, function(button) DecorateNative(o, button) end)
 		if o.sensor then return o end
 	end
 
@@ -271,11 +275,13 @@ function Frames:UpdateFrame(frame)
 			o.smUnit = unit
 			ns.Native.SetUnit(o.sensor, unit)
 		end
+		ns.Overheal.UpdateUnit(unit) -- caches max health while readable
+		o.gate:SetAlpha(ns.Overheal.Alpha(unit))
 		o:Show()
 		return
 	end
 	local can, aura = ns.Evaluate(unit)
-	if can then
+	if can and ns.Overheal.Allows(unit) then
 		local left = ns.db.overlay.showTimer and ns.Remaining(aura)
 		o.timer:SetText(left and left < 10 and string.format("%d", left + 0.5) or "")
 		UpdateSpiral(o, unit, aura)

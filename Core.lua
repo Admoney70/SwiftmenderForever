@@ -29,6 +29,10 @@ ns.defaults = {
 		showBorder = true,      -- border around the whole raid frame
 		borderSize = 2,
 		borderColor = "Green",
+		noOverheal = false,     -- only show markers when Swiftmend won't overheal
+		overhealScale = 100,    -- % of the estimated heal (Rejuvenation tooltip)
+		overhealAmount = 0,     -- fixed heal amount instead of the estimate (0 = auto)
+		overhealPredicted = true, -- count incoming heals as already landed
 		fadeOnCooldown = true,  -- fade markers while Swiftmend is on cooldown
 		cooldownAlpha = 0.35,
 		showIconBorder = true,  -- border around the marker icon
@@ -285,12 +289,21 @@ local function LearnPass()
 	ns.Evaluate("target")
 end
 
+-- Max health and the Rejuvenation heal estimate for the overheal gate.
+local lastOverheal = 0
+local function OverhealPass()
+	if GetTime() - lastOverheal < 1 then return end
+	lastOverheal = GetTime()
+	ns.Overheal.Refresh()
+end
+
 function ns.RefreshAll()
 	wipe(cache)
 	if ns.Native.Mutable() then
 		ns.Native.Flush()
 		Call("Flush")
 		if ns.Native.Available() then LearnPass() end
+		OverhealPass()
 	end
 	Call("Refresh")
 end
@@ -326,10 +339,18 @@ events:SetScript("OnEvent", function(self, event, arg1)
 		self:RegisterEvent("SPELLS_CHANGED")
 		self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 		self:RegisterEvent("UNIT_AURA")
+		self:RegisterEvent("UNIT_HEALTH")
+		self:RegisterEvent("UNIT_MAXHEALTH")
 		ns.StartTicker()
 	elseif event == "UNIT_AURA" then
 		-- the update payload is secret in combat; only the unit token is used
 		if ValidUnit(arg1) then ns.RefreshUnit(arg1) end
+	elseif event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" then
+		-- only the raid markers' overheal gate depends on health
+		if ns.db.overlay.noOverheal and ValidUnit(arg1) then
+			if event == "UNIT_MAXHEALTH" then ns.Overheal.UpdateUnit(arg1) end
+			ns.Frames:RefreshUnit(arg1)
+		end
 	elseif event == "PLAYER_TARGET_CHANGED" then
 		cache.target = nil
 		Call("TargetChanged")
