@@ -268,6 +268,7 @@ function Icon:Layout()
 	button:SetSize(cfg.size, cfg.size)
 	if button.sensors then
 		StyleNatives()
+		-- shown/hidden with the greyed base in Refresh
 		ns.LayoutEdges(button.edges, button, cfg.borderSize, cfg.borderColor, false, true)
 	else
 		ns.LayoutEdges(button.edges, button, cfg.borderSize, cfg.borderColor, cfg.showBorder, true)
@@ -323,6 +324,10 @@ function Icon:Refresh()
 		else
 			button.tex:Hide()
 		end
+		-- the greyed base keeps the border too (the lit native button draws
+		-- the same border on top of it)
+		local edgesShown = cfg.showBorder and showBase and true or false
+		for i = 1, 4 do button.edges[i]:SetShown(edgesShown) end
 		button.label:SetText("")
 		button.timer:SetText("")
 		if onCD then button:SetAlpha(cfg.cooldownAlpha) else button:SetAlpha(1) end
