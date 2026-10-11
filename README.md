@@ -10,7 +10,7 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
   last 10 seconds; each can be turned off.
   - Blizzard raid and party frames (`CompactRaidFrame…`, `CompactPartyFrame…`, `CompactRaidGroup…`)
   - [Buzzard Frames](https://www.curseforge.com/wow/addons/buzzard-frames) (frames named `Buzzard…` / `BF_…`)
-- **Draggable alert icon:** tracks your **target** only. It lights up and glows when your friendly target
+- **Draggable alert icon:** tracks your **target** only. It lights up when your friendly target
   (including yourself, when you target yourself) can be Swiftmended, showing their name and how long the HoT has left.
   - While Swiftmend is on cooldown, the icon fades and shows the cooldown swipe.
   - When your target can't be Swiftmended, the icon is hidden.

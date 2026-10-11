@@ -36,12 +36,6 @@ local function Create()
 	button.tex:SetTexture(ns.SpellTexture(ns.SPELLS.SWIFTMEND))
 	button.tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
-	button.glow = button:CreateTexture(nil, "OVERLAY")
-	button.glow:SetTexture("Interface\\Buttons\\UI-ActionButton-Border")
-	button.glow:SetBlendMode("ADD")
-	button.glow:SetVertexColor(0.3, 1, 0.5)
-	button.glow:SetPoint("CENTER")
-
 	button.cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
 	button.cooldown:SetAllPoints()
 	button.cooldown:SetDrawEdge(false)
@@ -88,7 +82,6 @@ function Icon:Layout()
 	if not button then return end
 	local cfg = ns.db.icon
 	button:SetSize(cfg.size, cfg.size)
-	button.glow:SetSize(cfg.size * 1.75, cfg.size * 1.75)
 	button:EnableMouse(not cfg.locked)
 	button.hint:SetShown(not cfg.locked)
 	ApplyPosition()
@@ -145,7 +138,6 @@ function Icon:Refresh()
 		local onCD = OnCooldown()
 		if onCD then button:SetAlpha(cfg.cooldownAlpha) else button:SetAlpha(1) end
 		button.tex:SetDesaturated(onCD)
-		button.glow:SetShown(not onCD)
 		local name = UnitName("target")
 		button.label:SetText(not IsSecret(name) and name or "")
 		local left = ns.Remaining(aura)
@@ -153,7 +145,6 @@ function Icon:Refresh()
 	else
 		button:SetAlpha(cfg.locked and cfg.inactiveAlpha or 0.6)
 		button.tex:SetDesaturated(true)
-		button.glow:Hide()
 		button.label:SetText("")
 		button.timer:SetText("")
 	end
