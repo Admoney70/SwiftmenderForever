@@ -40,7 +40,10 @@ Type **`/sm`** (or `/swiftmender`) to open the settings window. You can also rea
 Esc > Options > AddOns > Swiftmender Forever. The window covers the target icon (show, lock, size,
 cooldown fade, border thickness and colour, reset position), the raid frame markers (Blizzard and Buzzard on/off, marker icon,
 HoT spiral, countdown timer, marker border and frame border with thickness and colour, size,
-position, offsets) and whether to count only your own HoTs.
+anchor, X/Y offset with -/+ nudge buttons) and whether to count only your own HoTs.
+
+While the window is open, every raid frame shows a preview marker, so you can see where the marker
+lands as you change its size, anchor and offsets, even when nobody has a HoT.
 
 The target icon starts **unlocked**. Drag it where you want it, then right-click it or tick
 "Lock position".
@@ -57,6 +60,7 @@ The target icon starts **unlocked**. Drag it where you want it, then right-click
 | `/sm blizzard` / `/sm buzzard` | Turn markers on or off for each raid frame addon |
 | `/sm size <n>` | Set the raid frame marker size (default 14) |
 | `/sm anchor <point> [x y]` | Move the marker, e.g. `/sm anchor TOPRIGHT -2 -2` |
+| `/sm offset <x> <y>` | Set the marker's offset in pixels from its anchor, e.g. `/sm offset 4 -6` |
 | `/sm marker` / `/sm border` | Turn the marker icon or the raid frame border on or off |
 | `/sm markerborder [1-10]` | Turn the marker icon's border on or off, or set its thickness |
 | `/sm bordersize <1-10>` | Set the raid frame border thickness (default 2) |

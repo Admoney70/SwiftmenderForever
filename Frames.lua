@@ -161,12 +161,54 @@ local function CreateOverlay(frame, provider)
 	return o
 end
 
+-- Placement preview: while the settings window is open every hooked raid
+-- frame shows a ghost marker at the configured spot, so size, position and
+-- offsets can be tuned without anyone having a HoT. It is a plain frame on
+-- the raid frame (not the native button), so it can be shown at any time.
+local previewing = false
+
+local function LayoutPreview(o)
+	local cfg = ns.db.overlay
+	local p = o.preview
+	if not p then
+		local frame = o:GetParent()
+		p = CreateFrame("Frame", nil, frame)
+		p:SetFrameLevel(frame:GetFrameLevel() + 25)
+		p:EnableMouse(false)
+		p.icon = p:CreateTexture(nil, "ARTWORK")
+		p.icon:SetTexture(ns.SpellTexture(ns.SPELLS.SWIFTMEND))
+		p.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+		p.icon:SetAlpha(0.8)
+		p.iconEdges = ns.CreateEdges(p, 5)
+		p.edges = ns.CreateEdges(p)
+		o.preview = p
+	end
+	p:ClearAllPoints()
+	p:SetAllPoints(o)
+	p.icon:ClearAllPoints()
+	p.icon:SetSize(cfg.size, cfg.size)
+	p.icon:SetPoint(cfg.point, p, cfg.point, cfg.offsetX, cfg.offsetY)
+	p.icon:SetShown(cfg.showIcon)
+	ns.LayoutEdges(p.iconEdges, p.icon, cfg.iconBorderSize, cfg.iconBorderColor,
+		cfg.showIcon and cfg.showIconBorder, true)
+	ns.LayoutEdges(p.edges, p, cfg.borderSize, cfg.borderColor, cfg.showBorder)
+	p:SetShown(previewing and ns.db.overlay[o.provider] and true or false)
+end
+
+function Frames:SetPreview(on)
+	previewing = on and true or false
+	for _, o in pairs(overlays) do
+		if previewing or o.preview then LayoutPreview(o) end
+	end
+end
+
 function Frames:Attach(frame, provider)
 	if not frame or overlays[frame] then return end
 	if frame.IsForbidden and frame:IsForbidden() then return end
 	local o = CreateOverlay(frame, provider)
 	if o then
 		overlays[frame] = o
+		if previewing then LayoutPreview(o) end
 		self:UpdateFrame(frame)
 	end
 end
@@ -299,6 +341,7 @@ function Frames:Relayout()
 		end
 	end
 	pendingRelayout = not mutable or nil
+	if previewing then self:SetPreview(true) end
 	self:Refresh()
 end
 

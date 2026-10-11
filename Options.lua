@@ -20,6 +20,7 @@ local function Help()
 	print("  /sm blizzard | buzzard - toggle overlays on those raid frames")
 	print("  /sm size <n>           - raid-frame marker size (default 14)")
 	print("  /sm anchor <point> [x y] - marker position, e.g. TOPRIGHT -2 -2")
+	print("  /sm offset <x> <y>     - marker offset in pixels from its anchor")
 	print("  /sm marker | border    - toggle the marker icon / raid-frame border")
 	print("  /sm spiral | timer     - toggle the marker's HoT spiral / countdown")
 	print("  /sm bordersize <1-10>  - raid-frame border thickness")
@@ -118,6 +119,15 @@ local function Handler(msg)
 		db.overlay.offsetX = tonumber(x) or 0
 		db.overlay.offsetY = tonumber(y) or 0
 		ns.Frames:Relayout()
+	elseif cmd == "offset" then
+		local x, y = rest:match("^(%-?[%d%.]+)%s+(%-?[%d%.]+)$")
+		if not x then
+			ns.Print("usage: /sm offset <x> <y>   (now " .. db.overlay.offsetX .. " " .. db.overlay.offsetY .. ")")
+			return
+		end
+		db.overlay.offsetX, db.overlay.offsetY = tonumber(x), tonumber(y)
+		ns.Frames:Relayout()
+		ns.Print("marker offset " .. db.overlay.offsetX .. ", " .. db.overlay.offsetY)
 	elseif cmd == "marker" then
 		db.overlay.showIcon = not db.overlay.showIcon
 		ns.Frames:Relayout()

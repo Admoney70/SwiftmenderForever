@@ -57,7 +57,9 @@ local function Check(parent, label, y, get, set, what)
 	return cb, y - 26
 end
 
-local function Slider(parent, label, y, min, max, step, get, set, what, fmt)
+local Button
+
+local function Slider(parent, label, y, min, max, step, get, set, what, fmt, nudge)
 	local s = CreateFrame("Slider", nil, parent, "BackdropTemplate")
 	s:SetOrientation("HORIZONTAL")
 	s:SetSize(200, 16)
@@ -91,11 +93,27 @@ local function Slider(parent, label, y, min, max, step, get, set, what, fmt)
 		self:SetValue(get())
 		self.value:SetText(string.format(fmt, get()))
 	end
+	if nudge then
+		-- -/+ buttons for exact single-step adjustments
+		s.value:SetWidth(28)
+		local function Step(dir)
+			local v = math.max(min, math.min(max, get() + dir * step))
+			set(v)
+			Changed(what)
+			s:Sync()
+		end
+		local minus = Button(parent, "-", 22)
+		minus:SetPoint("LEFT", s.value, "RIGHT", 2, 0)
+		minus:SetScript("OnClick", function() Step(-1) end)
+		local plus = Button(parent, "+", 22)
+		plus:SetPoint("LEFT", minus, "RIGHT", 2, 0)
+		plus:SetScript("OnClick", function() Step(1) end)
+	end
 	controls[#controls + 1] = s
 	return s, y - 42
 end
 
-local function Button(parent, text, width)
+function Button(parent, text, width)
 	local b = CreateFrame("Button", nil, parent, "UIPanelButtonTemplate")
 	b:SetSize(width or 120, 22)
 	b:SetText(text)
@@ -155,7 +173,7 @@ local function Build()
 		local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
 		close:SetPoint("TOPRIGHT", -4, -4)
 	end
-	f:SetSize(680, 660)
+	f:SetSize(700, 720)
 	f:SetPoint("CENTER")
 	f:SetFrameStrata("DIALOG")
 	f:SetClampedToScreen(true)
@@ -179,7 +197,7 @@ local function Build()
 	local right = CreateFrame("Frame", nil, f)
 	right:SetPoint("TOPRIGHT")
 	right:SetPoint("BOTTOMRIGHT")
-	right:SetWidth(340)
+	right:SetWidth(360)
 
 	local y = -34
 
@@ -274,23 +292,40 @@ local function Build()
 		function(v) db().overlay.borderColor = v end, "frames")
 	_, y = Slider(right, "Marker size", y, 6, 40, 1,
 		function() return db().overlay.size end,
-		function(v) db().overlay.size = v end, "frames")
-	_, y = Cycle(right, "Position", y, POINTS,
+		function(v) db().overlay.size = v end, "frames", nil, true)
+	_, y = Cycle(right, "Marker anchor", y, POINTS,
 		function() return db().overlay.point end,
 		function(v) db().overlay.point = v end, "frames")
-	_, y = Slider(right, "X offset", y, -30, 30, 1,
+	_, y = Slider(right, "Marker X offset (left / right)", y, -60, 60, 1,
 		function() return db().overlay.offsetX end,
-		function(v) db().overlay.offsetX = v end, "frames")
-	_, y = Slider(right, "Y offset", y, -30, 30, 1,
+		function(v) db().overlay.offsetX = v end, "frames", nil, true)
+	_, y = Slider(right, "Marker Y offset (down / up)", y, -60, 60, 1,
 		function() return db().overlay.offsetY end,
-		function(v) db().overlay.offsetY = v end, "frames")
+		function(v) db().overlay.offsetY = v end, "frames", nil, true)
+	local resetMarker = Button(right, "Reset marker position", 160)
+	resetMarker:SetPoint("TOPLEFT", 26, y)
+	resetMarker:SetScript("OnClick", function()
+		local d = ns.defaults.overlay
+		db().overlay.point, db().overlay.offsetX, db().overlay.offsetY = d.point, d.offsetX, d.offsetY
+		Changed("frames")
+		Config:Sync()
+	end)
+	local previewNote = right:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
+	previewNote:SetPoint("TOPLEFT", resetMarker, "BOTTOMLEFT", 0, -6)
+	previewNote:SetWidth(290)
+	previewNote:SetJustifyH("LEFT")
+	previewNote:SetText("A preview marker shows on every raid frame while this window is open.")
 
 	f.status = f:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
 	f.status:SetPoint("BOTTOMLEFT", 16, 12)
 	f.status:SetPoint("BOTTOMRIGHT", -16, 12)
 	f.status:SetJustifyH("LEFT")
 
-	f:SetScript("OnShow", function() Config:Sync() end)
+	f:SetScript("OnShow", function()
+		Config:Sync()
+		ns.Frames:SetPreview(true)
+	end)
+	f:SetScript("OnHide", function() ns.Frames:SetPreview(false) end)
 	window = f
 end
 
