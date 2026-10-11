@@ -13,7 +13,12 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
   - [Buzzard Frames](https://www.curseforge.com/wow/addons/buzzard-frames) (frames named `Buzzard…` / `BF_…`)
 - **Draggable alert icon:** tracks your **target** only. It lights up when your friendly target
   (including yourself, when you target yourself) can be Swiftmended, showing their name and how long the HoT has left.
-  - While Swiftmend is on cooldown, the icon fades.
+  - Behaves like an action button:
+    - **Cooldown spiral** while Swiftmend is on cooldown (the global cooldown is ignored), and the icon fades.
+    - **Red tint** when the target is out of Swiftmend range.
+    - **Blue tint** when you don't have the mana.
+    - **Greyed out** (desaturated) when Swiftmend can't be used.
+    Each can be turned off in the settings window.
   - Optional border around the icon, with adjustable thickness and colour.
   - When your target can't be Swiftmended, the icon is hidden.
 - **Works in combat.** WoW Forever uses the Midnight addon rules, which hide buffs from addons during
@@ -38,7 +43,7 @@ to the `## Interface:` line.
 
 Type **`/sm`** (or `/swiftmender`) to open the settings window. You can also reach it from
 Esc > Options > AddOns > Swiftmender Forever. The window covers the target icon (show, lock, size,
-cooldown fade, border thickness and colour, reset position), the raid frame markers (Blizzard and Buzzard on/off, marker icon,
+cooldown spiral and fade, range/mana/usable colouring, border thickness and colour, reset position), the raid frame markers (Blizzard and Buzzard on/off, marker icon,
 HoT spiral, countdown timer, marker border and frame border with thickness and colour, size,
 anchor, X/Y offset with -/+ nudge buttons) and whether to count only your own HoTs.
 

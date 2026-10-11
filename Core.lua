@@ -44,6 +44,10 @@ ns.defaults = {
 		onlyWhenKnown = true,  -- hide when you don't know Swiftmend
 		inactiveAlpha = 0,     -- alpha when your target can't be Swiftmended
 		cooldownAlpha = 0.35,  -- alpha when they can but Swiftmend is on cooldown
+		showCooldown = true,   -- Swiftmend cooldown spiral
+		tintRange = true,      -- red when the target is out of range
+		tintMana = true,       -- blue when you lack the mana
+		desatUnusable = true,  -- grey when Swiftmend can't be used
 		showBorder = true,
 		borderSize = 2,
 		borderColor = "Green",
@@ -325,6 +329,7 @@ events:SetScript("OnEvent", function(self, event, arg1)
 		if ValidUnit(arg1) then ns.RefreshUnit(arg1) end
 	elseif event == "PLAYER_TARGET_CHANGED" then
 		cache.target = nil
+		Call("TargetChanged")
 		Call("RefreshUnit", "target")
 	elseif event == "SPELL_UPDATE_COOLDOWN" then
 		Call("UpdateCooldown")
