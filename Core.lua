@@ -27,6 +27,7 @@ ns.defaults = {
 		showSpiral = true,       -- HoT duration spiral on the marker icon
 		showTimer = true,        -- countdown text for the last 10 seconds
 		showBorder = true,
+		borderSize = 2,
 		borderColor = { 0.2, 1.0, 0.4, 0.9 },
 		patterns = {
 			blizzard = { "^CompactRaid", "^CompactParty" },
@@ -40,6 +41,9 @@ ns.defaults = {
 		onlyWhenKnown = true,  -- hide when you don't know Swiftmend
 		inactiveAlpha = 0,     -- alpha when your target can't be Swiftmended
 		cooldownAlpha = 0.35,  -- alpha when they can but Swiftmend is on cooldown
+		showBorder = true,
+		borderSize = 2,
+		borderColor = { 0.2, 1.0, 0.4, 0.9 },
 		point = { "CENTER", "UIParent", "CENTER", 0, -150 },
 	},
 }
@@ -76,6 +80,44 @@ function ns.ResetDB()
 	wipe(SwiftmenderForeverDB)
 	CopyDefaults(ns.defaults, SwiftmenderForeverDB)
 	ns.db = SwiftmenderForeverDB
+end
+
+-- Lays out four edge textures as a border around `anchor`; `outside` puts
+-- the border just outside the anchor instead of on its inner edge.
+function ns.LayoutEdges(edges, anchor, size, color, shown, outside)
+	local o = outside and size or 0
+	local top, bottom, left, right = edges[1], edges[2], edges[3], edges[4]
+	top:ClearAllPoints()
+	top:SetPoint("TOPLEFT", anchor, "TOPLEFT", -o, o)
+	top:SetPoint("TOPRIGHT", anchor, "TOPRIGHT", o, o)
+	top:SetHeight(size)
+	bottom:ClearAllPoints()
+	bottom:SetPoint("BOTTOMLEFT", anchor, "BOTTOMLEFT", -o, -o)
+	bottom:SetPoint("BOTTOMRIGHT", anchor, "BOTTOMRIGHT", o, -o)
+	bottom:SetHeight(size)
+	left:ClearAllPoints()
+	left:SetPoint("TOPLEFT", anchor, "TOPLEFT", -o, o)
+	left:SetPoint("BOTTOMLEFT", anchor, "BOTTOMLEFT", -o, -o)
+	left:SetWidth(size)
+	right:ClearAllPoints()
+	right:SetPoint("TOPRIGHT", anchor, "TOPRIGHT", o, o)
+	right:SetPoint("BOTTOMRIGHT", anchor, "BOTTOMRIGHT", o, -o)
+	right:SetWidth(size)
+	local r, g, b, a = unpack(color)
+	for i = 1, 4 do
+		edges[i]:SetVertexColor(r, g, b, a)
+		edges[i]:SetShown(shown)
+	end
+end
+
+function ns.CreateEdges(parent, sublevel)
+	local edges = {}
+	for i = 1, 4 do
+		local t = parent:CreateTexture(nil, "OVERLAY", nil, sublevel or 6)
+		t:SetColorTexture(1, 1, 1, 1)
+		edges[i] = t
+	end
+	return edges
 end
 
 function ns.SpellName(id)

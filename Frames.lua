@@ -41,12 +41,6 @@ local function ProviderFor(name)
 	end
 end
 
-local function CreateEdge(o)
-	local t = o:CreateTexture(nil, "OVERLAY", nil, 6)
-	t:SetColorTexture(1, 1, 1, 1)
-	return t
-end
-
 local function LayoutOverlay(o)
 	local cfg = ns.db.overlay
 	local size = cfg.size
@@ -61,17 +55,7 @@ local function LayoutOverlay(o)
 	if not (cfg.showIcon and cfg.showSpiral) then o.spiral:Hide() end
 	o.timer:SetShown(cfg.showIcon and cfg.showTimer)
 
-	local r, g, b, a = unpack(cfg.borderColor)
-	local t = 2
-	local e = o.edges
-	e[1]:ClearAllPoints(); e[1]:SetPoint("TOPLEFT"); e[1]:SetPoint("TOPRIGHT"); e[1]:SetHeight(t)
-	e[2]:ClearAllPoints(); e[2]:SetPoint("BOTTOMLEFT"); e[2]:SetPoint("BOTTOMRIGHT"); e[2]:SetHeight(t)
-	e[3]:ClearAllPoints(); e[3]:SetPoint("TOPLEFT"); e[3]:SetPoint("BOTTOMLEFT"); e[3]:SetWidth(t)
-	e[4]:ClearAllPoints(); e[4]:SetPoint("TOPRIGHT"); e[4]:SetPoint("BOTTOMRIGHT"); e[4]:SetWidth(t)
-	for i = 1, 4 do
-		e[i]:SetVertexColor(r, g, b, a)
-		e[i]:SetShown(cfg.showBorder)
-	end
+	ns.LayoutEdges(o.edges, o, cfg.borderSize, cfg.borderColor, cfg.showBorder)
 end
 
 -- Styles the native slot button. Runs inside initializeFrame (every time
@@ -102,12 +86,7 @@ local function DecorateNative(o, button)
 		button.smTimer = textHost:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
 		button.smTimer:SetPoint("CENTER", button, "CENTER", 0, 0)
 
-		button.smEdges = {}
-		for i = 1, 4 do
-			local t = button:CreateTexture(nil, "OVERLAY", nil, 6)
-			t:SetColorTexture(1, 1, 1, 1)
-			button.smEdges[i] = t
-		end
+		button.smEdges = ns.CreateEdges(button)
 	end
 
 	button:ClearAllPoints()
@@ -132,16 +111,7 @@ local function DecorateNative(o, button)
 
 	-- the border hangs off the native button (so it shares its visibility)
 	-- but outlines the whole raid frame
-	local r, g, b, a = unpack(cfg.borderColor)
-	local e, t = button.smEdges, 2
-	e[1]:ClearAllPoints(); e[1]:SetPoint("TOPLEFT", o); e[1]:SetPoint("TOPRIGHT", o); e[1]:SetHeight(t)
-	e[2]:ClearAllPoints(); e[2]:SetPoint("BOTTOMLEFT", o); e[2]:SetPoint("BOTTOMRIGHT", o); e[2]:SetHeight(t)
-	e[3]:ClearAllPoints(); e[3]:SetPoint("TOPLEFT", o); e[3]:SetPoint("BOTTOMLEFT", o); e[3]:SetWidth(t)
-	e[4]:ClearAllPoints(); e[4]:SetPoint("TOPRIGHT", o); e[4]:SetPoint("BOTTOMRIGHT", o); e[4]:SetWidth(t)
-	for i = 1, 4 do
-		e[i]:SetVertexColor(r, g, b, a)
-		e[i]:SetShown(cfg.showBorder)
-	end
+	ns.LayoutEdges(button.smEdges, o, cfg.borderSize, cfg.borderColor, cfg.showBorder)
 end
 
 local function CreateOverlay(frame, provider)
@@ -179,7 +149,7 @@ local function CreateOverlay(frame, provider)
 	o.timer = text:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
 	o.timer:SetPoint("CENTER", o.icon, "CENTER", 0, 0)
 
-	o.edges = { CreateEdge(o), CreateEdge(o), CreateEdge(o), CreateEdge(o) }
+	o.edges = ns.CreateEdges(o)
 	LayoutOverlay(o)
 	o:Hide()
 	return o

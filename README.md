@@ -5,14 +5,15 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
 
 ## Features
 
-- **Raid frame markers:** a Swiftmend icon and a green border on every group member who can be
-  Swiftmended. The icon can show a spiral and a countdown for the HoT's remaining duration;
+- **Raid frame markers:** a Swiftmend icon and a green border (adjustable thickness) on every group
+  member who can be Swiftmended. The icon can show a spiral and a countdown for the HoT's remaining duration;
   each can be turned off.
   - Blizzard raid and party frames (`CompactRaidFrame…`, `CompactPartyFrame…`, `CompactRaidGroup…`)
   - [Buzzard Frames](https://www.curseforge.com/wow/addons/buzzard-frames) (frames named `Buzzard…` / `BF_…`)
 - **Draggable alert icon:** tracks your **target** only. It lights up when your friendly target
   (including yourself, when you target yourself) can be Swiftmended, showing their name and how long the HoT has left.
   - While Swiftmend is on cooldown, the icon fades.
+  - Optional green border around the icon, with adjustable thickness.
   - When your target can't be Swiftmended, the icon is hidden.
 - **Works in combat.** WoW Forever uses the Midnight addon rules, which hide buffs from addons during
   combat, encounters, M+ and PvP. Swiftmender doesn't try to read them. It gives Blizzard's own aura
@@ -36,8 +37,8 @@ to the `## Interface:` line.
 
 Type **`/sm`** (or `/swiftmender`) to open the settings window. You can also reach it from
 Esc > Options > AddOns > Swiftmender Forever. The window covers the target icon (show, lock, size,
-cooldown fade, reset position), the raid frame markers (Blizzard and Buzzard on/off, marker icon,
-HoT spiral, countdown timer, border, size, position, offsets) and whether to count only your own HoTs.
+cooldown fade, border and thickness, reset position), the raid frame markers (Blizzard and Buzzard on/off, marker icon,
+HoT spiral, countdown timer, border and thickness, size, position, offsets) and whether to count only your own HoTs.
 
 The target icon starts **unlocked**. Drag it where you want it, then right-click it or tick
 "Lock position".
@@ -55,6 +56,8 @@ The target icon starts **unlocked**. Drag it where you want it, then right-click
 | `/sm size <n>` | Set the raid frame marker size (default 14) |
 | `/sm anchor <point> [x y]` | Move the marker, e.g. `/sm anchor TOPRIGHT -2 -2` |
 | `/sm marker` / `/sm border` | Turn the marker icon or the green border on or off |
+| `/sm bordersize <1-10>` | Set the raid frame border thickness (default 2) |
+| `/sm iconborder [1-10]` | Turn the target icon border on or off, or set its thickness |
 | `/sm spiral` / `/sm timer` | Turn the marker's HoT duration spiral or countdown timer on or off |
 | `/sm pattern add\|remove\|list <blizzard\|buzzard> <lua pattern>` | Change which frame names get markers |
 | `/sm frames` | List unit frames that don't have a marker yet, to help find their names |

@@ -42,7 +42,11 @@ local function DecorateTarget(b)
 		b.smTimer:SetPoint("TOPLEFT", 3, -3)
 		b.smLabel = host:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 		b.smLabel:SetPoint("TOP", b, "BOTTOM", 0, -2)
+		b.smEdges = ns.CreateEdges(host)
 	end
+	local cfg = ns.db.icon
+	ns.LayoutEdges(b.smEdges, b, cfg.borderSize, cfg.borderColor, cfg.showBorder, true)
+	b.smLabel:SetPoint("TOP", b, "BOTTOM", 0, -2 - (cfg.showBorder and cfg.borderSize or 0))
 	b:SetDurationText(b.smTimer, ns.Native.TimerOptions())
 	-- the button is recreated for each new aura, so this follows target swaps
 	b.smLabel:SetText(UnitName("target"))
@@ -75,6 +79,7 @@ local function Create()
 
 	button.label = text:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 	button.label:SetPoint("TOP", button, "BOTTOM", 0, -2)
+	button.edges = ns.CreateEdges(text)
 
 	button.hint = text:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
 	button.hint:SetPoint("BOTTOM", button, "TOP", 0, 2)
@@ -110,10 +115,28 @@ local function Create()
 	end
 end
 
+local pendingBorder
 function Icon:Layout()
 	if not button then return end
 	local cfg = ns.db.icon
 	button:SetSize(cfg.size, cfg.size)
+	if button.sensor then
+		-- the native button's border can only be restyled while auras are
+		-- readable; otherwise it is applied when combat ends
+		if not button.native then
+			pendingBorder = nil -- applied when Blizzard creates the button
+		elseif ns.Native.Mutable() then
+			ns.LayoutEdges(button.native.smEdges, button.native, cfg.borderSize, cfg.borderColor, cfg.showBorder, true)
+			button.native.smLabel:SetPoint("TOP", button.native, "BOTTOM", 0, -2 - (cfg.showBorder and cfg.borderSize or 0))
+			pendingBorder = nil
+		else
+			pendingBorder = true
+		end
+		ns.LayoutEdges(button.edges, button, cfg.borderSize, cfg.borderColor, false, true)
+	else
+		ns.LayoutEdges(button.edges, button, cfg.borderSize, cfg.borderColor, cfg.showBorder, true)
+	end
+	button.label:SetPoint("TOP", button, "BOTTOM", 0, -2 - (cfg.showBorder and cfg.borderSize or 0))
 	button:EnableMouse(not cfg.locked)
 	button.hint:SetShown(not cfg.locked)
 	ApplyPosition()
@@ -196,10 +219,16 @@ function Icon:Refresh()
 	end
 end
 
+function Icon:Flush()
+	if pendingBorder then self:Layout() end
+end
+
 function Icon:RefreshUnit(unit)
 	if button and button.sensor and unit == "target" then
 		ns.Native.Update(button.sensor)
-		if button.native and ns.Native.Mutable() then
+		if not button.native then
+			pendingBorder = nil -- applied when Blizzard creates the button
+		elseif ns.Native.Mutable() then
 			button.native.smLabel:SetText(UnitName("target"))
 		end
 	end

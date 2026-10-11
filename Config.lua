@@ -153,7 +153,7 @@ local function Build()
 		local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
 		close:SetPoint("TOPRIGHT", -4, -4)
 	end
-	f:SetSize(340, 700)
+	f:SetSize(680, 520)
 	f:SetPoint("CENTER")
 	f:SetFrameStrata("DIALOG")
 	f:SetClampedToScreen(true)
@@ -169,77 +169,60 @@ local function Build()
 	title:SetPoint("TOP", 0, -6)
 	title:SetText("Swiftmender Forever")
 
+	-- two columns: target icon + general on the left, raid frames on the right
+	local left = CreateFrame("Frame", nil, f)
+	left:SetPoint("TOPLEFT")
+	left:SetPoint("BOTTOMLEFT")
+	left:SetWidth(340)
+	local right = CreateFrame("Frame", nil, f)
+	right:SetPoint("TOPRIGHT")
+	right:SetPoint("BOTTOMRIGHT")
+	right:SetWidth(340)
+
 	local y = -34
 
 	-- Target icon ---------------------------------------------------------
-	y = Header(f, "Target icon", y)
-	_, y = Check(f, "Show the target icon", y,
+	y = Header(left, "Target icon", y)
+	_, y = Check(left, "Show the target icon", y,
 		function() return db().icon.enabled end,
 		function(v) db().icon.enabled = v end, "icon")
-	_, y = Check(f, "Lock position (unlock to drag it)", y,
+	_, y = Check(left, "Lock position (unlock to drag it)", y,
 		function() return db().icon.locked end,
 		function(v) db().icon.locked = v end, "icon")
-	_, y = Check(f, "Hide if I don't know Swiftmend", y,
+	_, y = Check(left, "Hide if I don't know Swiftmend", y,
 		function() return db().icon.onlyWhenKnown end,
 		function(v) db().icon.onlyWhenKnown = v end, "icon")
-	_, y = Slider(f, "Icon size", y, 16, 128, 1,
+	_, y = Slider(left, "Icon size", y, 16, 128, 1,
 		function() return db().icon.size end,
 		function(v) db().icon.size = v end, "icon")
-	_, y = Slider(f, "Opacity while Swiftmend is on cooldown", y, 0, 1, 0.05,
+	_, y = Slider(left, "Opacity while Swiftmend is on cooldown", y, 0, 1, 0.05,
 		function() return db().icon.cooldownAlpha end,
 		function(v) db().icon.cooldownAlpha = v end, "icon", "%.2f")
-	local resetPos = Button(f, "Reset position", 130)
+	_, y = Check(left, "Show border", y,
+		function() return db().icon.showBorder end,
+		function(v) db().icon.showBorder = v end, "icon")
+	_, y = Slider(left, "Border thickness", y, 1, 10, 1,
+		function() return db().icon.borderSize end,
+		function(v) db().icon.borderSize = v end, "icon")
+	local resetPos = Button(left, "Reset position", 130)
 	resetPos:SetPoint("TOPLEFT", 26, y)
 	resetPos:SetScript("OnClick", function() ns.Icon:ResetPosition() end)
 	y = y - 34
 
-	-- Raid frames ---------------------------------------------------------
-	y = Header(f, "Raid frames", y)
-	f.blizz, y = Check(f, "Blizzard raid frames", y,
-		function() return db().overlay.blizzard end,
-		function(v) db().overlay.blizzard = v end)
-	f.buzz, y = Check(f, "Buzzard Frames", y,
-		function() return db().overlay.buzzard end,
-		function(v) db().overlay.buzzard = v end)
-	_, y = Check(f, "Show Swiftmend marker icon", y,
-		function() return db().overlay.showIcon end,
-		function(v) db().overlay.showIcon = v end, "frames")
-	_, y = Check(f, "Show HoT duration spiral on the marker", y,
-		function() return db().overlay.showSpiral end,
-		function(v) db().overlay.showSpiral = v end, "frames")
-	_, y = Check(f, "Show countdown timer on the marker", y,
-		function() return db().overlay.showTimer end,
-		function(v) db().overlay.showTimer = v end, "frames")
-	_, y = Check(f, "Show green border", y,
-		function() return db().overlay.showBorder end,
-		function(v) db().overlay.showBorder = v end, "frames")
-	_, y = Slider(f, "Marker size", y, 6, 40, 1,
-		function() return db().overlay.size end,
-		function(v) db().overlay.size = v end, "frames")
-	_, y = Cycle(f, "Position", y, POINTS,
-		function() return db().overlay.point end,
-		function(v) db().overlay.point = v end, "frames")
-	_, y = Slider(f, "X offset", y, -30, 30, 1,
-		function() return db().overlay.offsetX end,
-		function(v) db().overlay.offsetX = v end, "frames")
-	_, y = Slider(f, "Y offset", y, -30, 30, 1,
-		function() return db().overlay.offsetY end,
-		function(v) db().overlay.offsetY = v end, "frames")
-
 	-- General -------------------------------------------------------------
-	y = Header(f, "General", y)
-	_, y = Check(f, "Only count my own Rejuvenation / Regrowth", y,
+	y = Header(left, "General", y)
+	_, y = Check(left, "Only count my own Rejuvenation / Regrowth", y,
 		function() return db().onlyMine end,
 		function(v) db().onlyMine = v end, "filters")
 
-	local rescan = Button(f, "Rescan frames", 130)
+	local rescan = Button(left, "Rescan frames", 130)
 	rescan:SetPoint("TOPLEFT", 26, y - 4)
 	rescan:SetScript("OnClick", function()
 		ns.Frames:ScanNow()
 		ns.RefreshAll()
 		Config:Sync()
 	end)
-	local reset = Button(f, "Reset all", 130)
+	local reset = Button(left, "Reset all", 130)
 	reset:SetPoint("LEFT", rescan, "RIGHT", 10, 0)
 	reset:SetScript("OnClick", function()
 		ns.ResetDB()
@@ -248,6 +231,42 @@ local function Build()
 		Config:Sync()
 		ns.Print("settings reset")
 	end)
+
+	-- Raid frames ---------------------------------------------------------
+	y = Header(right, "Raid frames", -34)
+	f.blizz, y = Check(right, "Blizzard raid frames", y,
+		function() return db().overlay.blizzard end,
+		function(v) db().overlay.blizzard = v end)
+	f.buzz, y = Check(right, "Buzzard Frames", y,
+		function() return db().overlay.buzzard end,
+		function(v) db().overlay.buzzard = v end)
+	_, y = Check(right, "Show Swiftmend marker icon", y,
+		function() return db().overlay.showIcon end,
+		function(v) db().overlay.showIcon = v end, "frames")
+	_, y = Check(right, "Show HoT duration spiral on the marker", y,
+		function() return db().overlay.showSpiral end,
+		function(v) db().overlay.showSpiral = v end, "frames")
+	_, y = Check(right, "Show countdown timer on the marker", y,
+		function() return db().overlay.showTimer end,
+		function(v) db().overlay.showTimer = v end, "frames")
+	_, y = Check(right, "Show border", y,
+		function() return db().overlay.showBorder end,
+		function(v) db().overlay.showBorder = v end, "frames")
+	_, y = Slider(right, "Border thickness", y, 1, 10, 1,
+		function() return db().overlay.borderSize end,
+		function(v) db().overlay.borderSize = v end, "frames")
+	_, y = Slider(right, "Marker size", y, 6, 40, 1,
+		function() return db().overlay.size end,
+		function(v) db().overlay.size = v end, "frames")
+	_, y = Cycle(right, "Position", y, POINTS,
+		function() return db().overlay.point end,
+		function(v) db().overlay.point = v end, "frames")
+	_, y = Slider(right, "X offset", y, -30, 30, 1,
+		function() return db().overlay.offsetX end,
+		function(v) db().overlay.offsetX = v end, "frames")
+	_, y = Slider(right, "Y offset", y, -30, 30, 1,
+		function() return db().overlay.offsetY end,
+		function(v) db().overlay.offsetY = v end, "frames")
 
 	f.status = f:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
 	f.status:SetPoint("BOTTOMLEFT", 16, 12)
