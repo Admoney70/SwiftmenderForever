@@ -7,9 +7,9 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
 
 - **Raid frame markers:** a Swiftmend icon on every group member who can be Swiftmended. The icon has
   its own border (black, 1px by default), and the whole raid frame gets a border too (green, 2px).
-  Each border can be turned off and has its own thickness and colour.
-  - Markers and borders fade while Swiftmend is on cooldown (optional, adjustable opacity). The icon can show a spiral and a countdown for the HoT's remaining duration;
-  each can be turned off.
+  Each border can be turned off and has its own thickness and colour. The icon can show a spiral and
+  a countdown for the HoT's remaining duration; each can be turned off.
+  - Markers and borders fade while Swiftmend is on cooldown (optional, adjustable opacity).
   - Blizzard raid and party frames (`CompactRaidFrame…`, `CompactPartyFrame…`, `CompactRaidGroup…`)
   - [Buzzard Frames](https://www.curseforge.com/wow/addons/buzzard-frames) (frames named `Buzzard…` / `BF_…`)
 - **Draggable alert icon:** tracks your **target** only. It lights up when your friendly target
