@@ -3,7 +3,8 @@
 #
 # One-time setup (repository Settings > Secrets and variables > Actions):
 #   secret   CF_API_KEY        CurseForge API token (curseforge.com > account > API tokens)
-#   variable CF_PROJECT_ID     numeric project id from the CurseForge project page
+#   variable CF_PROJECT_ID     optional; the project id is also in the TOC
+#                              (## X-Curse-Project-ID), which the packager reads
 #   variable CF_GAME_VERSIONS  optional, e.g. "12.1.5" -- overrides the game
 #                              version the packager derives from the TOC
 name: Release
@@ -32,5 +33,5 @@ jobs:
         uses: BigWigsMods/packager@v2
         with:
           args: >-
-            -p ${{ vars.CF_PROJECT_ID }}
+            ${{ vars.CF_PROJECT_ID && format('-p {0}', vars.CF_PROJECT_ID) || '' }}
             ${{ vars.CF_GAME_VERSIONS && format('-g {0}', vars.CF_GAME_VERSIONS) || '' }}

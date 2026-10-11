@@ -99,7 +99,7 @@ Releases are built by [BigWigsMods/packager](https://github.com/BigWigsMods/pack
 2. Create an API token at curseforge.com > account > API tokens.
 3. In this GitHub repository, go to Settings > Secrets and variables > Actions:
    - add the secret `CF_API_KEY` (the token)
-   - add the variable `CF_PROJECT_ID` (the project ID)
+   - the project ID is already in the TOC (`## X-Curse-Project-ID: 1739421`)
    - optionally add `CF_GAME_VERSIONS` (for example `12.1.5`) if the packager can't map
      `## Interface: 16001` to a CurseForge game version
 4. Bump `## Version:` in the TOC, add an entry to `CHANGELOG.md`, then tag and push:
