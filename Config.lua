@@ -173,7 +173,7 @@ local function Build()
 		local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
 		close:SetPoint("TOPRIGHT", -4, -4)
 	end
-	f:SetSize(700, 800)
+	f:SetSize(700, 826)
 	f:SetPoint("CENTER")
 	f:SetFrameStrata("DIALOG")
 	f:SetClampedToScreen(true)
@@ -221,6 +221,9 @@ local function Build()
 	_, y = Check(left, "Show greyed icon when target has no HoT", y,
 		function() return db().icon.showInactive end,
 		function(v) db().icon.showInactive = v end, "icon")
+	_, y = Check(left, "Show HoT time left on the icon", y,
+		function() return db().icon.showTimer end,
+		function(v) db().icon.showTimer = v end, "icon")
 	_, y = Check(left, "Cooldown spiral while Swiftmend is on cooldown", y,
 		function() return db().icon.showCooldown end,
 		function(v) db().icon.showCooldown = v end, "icon")
@@ -269,6 +272,8 @@ local function Build()
 		Config:Sync()
 		ns.Print("settings reset")
 	end)
+
+	local leftBottom = y - 30 -- below the Rescan / Reset buttons
 
 	-- Raid frames ---------------------------------------------------------
 	y = Header(right, "Raid frames", -34)
@@ -327,6 +332,10 @@ local function Build()
 	end)
 	local previewNote = right:CreateFontString(nil, "ARTWORK", "GameFontDisableSmall")
 	previewNote:SetPoint("TOPLEFT", resetMarker, "BOTTOMLEFT", 0, -6)
+	local rightBottom = y - 50 -- below the reset button and the note
+
+	-- fit the window to the taller column, plus room for the status lines
+	f:SetHeight(math.max(-leftBottom, -rightBottom) + 44)
 	previewNote:SetWidth(290)
 	previewNote:SetJustifyH("LEFT")
 	previewNote:SetText("A preview marker shows on every raid frame while this window is open.")

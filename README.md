@@ -14,6 +14,7 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
 - **Draggable alert icon:** tracks your **target** only. It lights up when your friendly target
   (including yourself, when you target yourself) can be Swiftmended, showing their name and how long the HoT has left.
   - Behaves like an action button:
+    - **HoT time left** in the corner (can be hidden; the spirals still show).
     - **Cooldown spiral** while Swiftmend is on cooldown (the global cooldown is ignored), and the icon fades.
     - **Red tint** when the target is out of Swiftmend range.
     - **Blue tint** when you don't have the mana.
@@ -70,6 +71,7 @@ The target icon starts **unlocked**. Drag it where you want it, then right-click
 | `/sm marker` / `/sm border` | Turn the marker icon or the raid frame border on or off |
 | `/sm markerborder [1-10]` | Turn the marker icon's border on or off, or set its thickness |
 | `/sm bordersize <1-10>` | Set the raid frame border thickness (default 2) |
+| `/sm icontimer` | Show or hide the HoT time left on the target icon |
 | `/sm iconborder [1-10]` | Turn the target icon border on or off, or set its thickness |
 | `/sm spiral` / `/sm timer` | Turn the marker's HoT duration spiral or countdown timer on or off |
 | `/sm pattern add\|remove\|list <blizzard\|buzzard> <lua pattern>` | Change which frame names get markers |
@@ -86,6 +88,22 @@ Buzzard Frames' internal frame names aren't documented. If no markers appear on 
 1. Join a group and type `/sm frames`.
 2. Find the name of a Buzzard frame in the list.
 3. Add its prefix, e.g. `/sm pattern add buzzard ^BuzzardRaid`.
+
+## Releasing to CurseForge
+
+Releases are built by [BigWigsMods/packager](https://github.com/BigWigsMods/packager) from
+`.github/workflows/release.yml` whenever a tag like `v1.0.1` is pushed. One-time setup:
+
+1. Create the project on CurseForge (game: World of Warcraft, select the Forever game version) and
+   note its numeric **Project ID**.
+2. Create an API token at curseforge.com > account > API tokens.
+3. In this GitHub repository, go to Settings > Secrets and variables > Actions:
+   - add the secret `CF_API_KEY` (the token)
+   - add the variable `CF_PROJECT_ID` (the project ID)
+   - optionally add `CF_GAME_VERSIONS` (for example `12.1.5`) if the packager can't map
+     `## Interface: 16001` to a CurseForge game version
+4. Bump `## Version:` in the TOC, add an entry to `CHANGELOG.md`, then tag and push:
+   `git tag v1.0.1 && git push origin v1.0.1`.
 
 ## Files
 

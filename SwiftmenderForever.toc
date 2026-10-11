@@ -1,6 +1,6 @@
 ## Interface: 16001, 120105, 120100
 ## Title: Swiftmender Forever
-## Notes: Shows who can be Swiftmended (has Rejuvenation or Regrowth) on Blizzard and Buzzard raid frames, plus a draggable alert icon.
+## Notes: Shows who can be Swiftmended (has Rejuvenation or Regrowth) on Blizzard and Buzzard raid frames, plus a draggable target icon. Works in combat.
 ## Author: admoney70
 ## Version: 1.0.0
 ## SavedVariables: SwiftmenderForeverDB

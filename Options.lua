@@ -26,6 +26,7 @@ local function Help()
 	print("  /sm bordersize <1-10>  - raid-frame border thickness")
 	print("  /sm markerborder [1-10] - toggle the marker icon border, or set its thickness")
 	print("  /sm iconborder [1-10]  - toggle the target icon border, or set its thickness")
+	print("  /sm icontimer          - toggle the HoT time-left number on the target icon")
 	print("  /sm pattern add|remove|list <blizzard|buzzard> <lua pattern>")
 	print("  /sm frames             - list unit frames that aren't hooked yet")
 	print("  /sm scan               - rescan for raid frames")
@@ -150,6 +151,10 @@ local function Handler(msg)
 		end
 		ns.Frames:Relayout()
 		ns.Print("marker icon border " .. OnOff(db.overlay.showIconBorder) .. " (" .. db.overlay.iconBorderSize .. "px)")
+	elseif cmd == "icontimer" then
+		db.icon.showTimer = not db.icon.showTimer
+		ns.Icon:Layout()
+		ns.Print("target icon HoT timer " .. OnOff(db.icon.showTimer))
 	elseif cmd == "iconborder" then
 		if tonumber(rest) then
 			db.icon.borderSize = math.max(1, math.min(10, math.floor(tonumber(rest))))

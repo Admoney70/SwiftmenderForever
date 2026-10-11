@@ -1,0 +1,36 @@
+# Packages the addon and uploads it to CurseForge (and a GitHub release)
+# whenever a version tag like v1.0.0 is pushed.
+#
+# One-time setup (repository Settings > Secrets and variables > Actions):
+#   secret   CF_API_KEY        CurseForge API token (curseforge.com > account > API tokens)
+#   variable CF_PROJECT_ID     numeric project id from the CurseForge project page
+#   variable CF_GAME_VERSIONS  optional, e.g. "12.1.5" -- overrides the game
+#                              version the packager derives from the TOC
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      CF_API_KEY: ${{ secrets.CF_API_KEY }}
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Package and upload
+        uses: BigWigsMods/packager@v2
+        with:
+          args: >-
+            -p ${{ vars.CF_PROJECT_ID }}
+            ${{ vars.CF_GAME_VERSIONS && format('-g {0}', vars.CF_GAME_VERSIONS) || '' }}

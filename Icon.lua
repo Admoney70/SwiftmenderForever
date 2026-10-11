@@ -152,7 +152,13 @@ local function DecorateTarget(b, state)
 	local cfg = ns.db.icon
 	ns.LayoutEdges(b.smEdges, b, cfg.borderSize, cfg.borderColor, cfg.showBorder, true)
 	b.smLabel:SetPoint("TOP", b, "BOTTOM", 0, LabelOffset(cfg))
-	b:SetDurationText(b.smTimer, ns.Native.TimerOptions())
+	if cfg.showTimer then
+		b.smTimer:Show()
+		b:SetDurationText(b.smTimer, ns.Native.TimerOptions())
+	else
+		b:ClearDurationText()
+		b.smTimer:Hide()
+	end
 	-- the button is recreated for each new aura, so this follows target swaps
 	b.smLabel:SetText(UnitName("target"))
 end
@@ -337,7 +343,7 @@ function Icon:Refresh()
 		local name = UnitName("target")
 		button.label:SetText(not IsSecret(name) and name or "")
 		local left = ns.Remaining(aura)
-		button.timer:SetText(left and string.format("%d", left + 0.5) or "")
+		button.timer:SetText(cfg.showTimer and left and string.format("%d", left + 0.5) or "")
 	else
 		-- greyed when the target has no HoT (or there's no target)
 		if not cfg.locked then
