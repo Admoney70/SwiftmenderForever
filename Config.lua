@@ -173,7 +173,7 @@ local function Build()
 		local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
 		close:SetPoint("TOPRIGHT", -4, -4)
 	end
-	f:SetSize(700, 780)
+	f:SetSize(700, 800)
 	f:SetPoint("CENTER")
 	f:SetFrameStrata("DIALOG")
 	f:SetClampedToScreen(true)
@@ -218,6 +218,9 @@ local function Build()
 	_, y = Slider(left, "Opacity while Swiftmend is on cooldown", y, 0, 1, 0.05,
 		function() return db().icon.cooldownAlpha end,
 		function(v) db().icon.cooldownAlpha = v end, "icon", "%.2f")
+	_, y = Check(left, "Show greyed icon when target has no HoT", y,
+		function() return db().icon.showInactive end,
+		function(v) db().icon.showInactive = v end, "icon")
 	_, y = Check(left, "Cooldown spiral while Swiftmend is on cooldown", y,
 		function() return db().icon.showCooldown end,
 		function(v) db().icon.showCooldown = v end, "icon")

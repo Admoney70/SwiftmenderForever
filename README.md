@@ -20,7 +20,8 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
     - **Greyed out** (desaturated) when Swiftmend can't be used.
     Each can be turned off in the settings window.
   - Optional border around the icon, with adjustable thickness and colour.
-  - When your target can't be Swiftmended, the icon is hidden.
+  - When your target has no Rejuvenation or Regrowth (or you have no target), the icon shows greyed
+    out. Untick "Show greyed icon when target has no HoT" to hide it instead.
 - **Works in combat.** WoW Forever uses the Midnight addon rules, which hide buffs from addons during
   combat, encounters, M+ and PvP. Swiftmender doesn't try to read them. It gives Blizzard's own aura
   display (`Blizzard_AuraContainer`) a slot that matches only Rejuvenation and Regrowth. The game then

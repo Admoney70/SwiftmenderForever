@@ -1,5 +1,6 @@
 -- Swiftmender Forever: draggable target icon.
--- Lights up when your target (including yourself) can be Swiftmended,
+-- Shows greyed out, and lights up when your target (including yourself)
+-- can be Swiftmended,
 -- showing their name and the HoT time left. Behaves like an action button:
 -- a cooldown spiral (and fade) while Swiftmend is on cooldown, a red tint
 -- when the target is out of range, blue when you lack the mana, and
@@ -296,20 +297,23 @@ function Icon:Refresh()
 
 	if button.sensors then
 		ShowState(state)
-		-- Out of combat we know whether the icon is lit; in combat we don't,
-		-- so the spiral then sits on a faint ghost icon instead of thin air.
+		-- The greyed base icon is ours and always drawn; the native button
+		-- covers it with the lit icon only while the target has the HoT, so
+		-- this needs no aura data and works in combat.
+		local showBase = cfg.showInactive or not cfg.locked
+		-- Without the base, out of combat we know whether the icon is lit; in
+		-- combat we don't, so the spiral then sits on a faint ghost icon.
 		local known = ns.Native.Mutable()
 		local lit = known and FriendlyTarget() and ns.Evaluate("target")
-		local showSpiral = spiral and (lit or not known)
+		local showSpiral = spiral and (showBase or lit or not known)
 		button.cooldown:SetAlpha(showSpiral and 1 or 0)
-		if not cfg.locked then
+		ApplyLook(button.tex, "unusable")
+		if showBase then
 			button.tex:Show()
-			button.tex:SetAlpha(0.6)
-			ApplyLook(button.tex, "unusable")
+			button.tex:SetAlpha(cfg.locked and 1 or 0.6)
 		elseif showSpiral and not lit then
 			button.tex:Show()
 			button.tex:SetAlpha(0.35)
-			ApplyLook(button.tex, "unusable")
 		else
 			button.tex:Hide()
 		end
@@ -335,9 +339,16 @@ function Icon:Refresh()
 		local left = ns.Remaining(aura)
 		button.timer:SetText(left and string.format("%d", left + 0.5) or "")
 	else
-		button:SetAlpha(cfg.locked and cfg.inactiveAlpha or 0.6)
+		-- greyed when the target has no HoT (or there's no target)
+		if not cfg.locked then
+			button:SetAlpha(0.6)
+		elseif cfg.showInactive then
+			if onCD then button:SetAlpha(cfg.cooldownAlpha) else button:SetAlpha(1) end
+		else
+			button:SetAlpha(0)
+		end
 		ApplyLook(button.tex, "unusable")
-		button.cooldown:SetAlpha(0)
+		button.cooldown:SetAlpha(spiral and cfg.showInactive and 1 or 0)
 		button.label:SetText("")
 		button.timer:SetText("")
 	end
