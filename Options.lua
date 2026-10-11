@@ -20,9 +20,10 @@ local function Help()
 	print("  /sm blizzard | buzzard - toggle overlays on those raid frames")
 	print("  /sm size <n>           - raid-frame marker size (default 14)")
 	print("  /sm anchor <point> [x y] - marker position, e.g. TOPRIGHT -2 -2")
-	print("  /sm marker | border    - toggle the marker icon / green border")
+	print("  /sm marker | border    - toggle the marker icon / raid-frame border")
 	print("  /sm spiral | timer     - toggle the marker's HoT spiral / countdown")
 	print("  /sm bordersize <1-10>  - raid-frame border thickness")
+	print("  /sm markerborder [1-10] - toggle the marker icon border, or set its thickness")
 	print("  /sm iconborder [1-10]  - toggle the target icon border, or set its thickness")
 	print("  /sm pattern add|remove|list <blizzard|buzzard> <lua pattern>")
 	print("  /sm frames             - list unit frames that aren't hooked yet")
@@ -130,6 +131,15 @@ local function Handler(msg)
 		db.overlay.borderSize = math.max(1, math.min(10, math.floor(tonumber(rest))))
 		ns.Frames:Relayout()
 		ns.Print("frame border thickness " .. db.overlay.borderSize)
+	elseif cmd == "markerborder" then
+		if tonumber(rest) then
+			db.overlay.iconBorderSize = math.max(1, math.min(10, math.floor(tonumber(rest))))
+			db.overlay.showIconBorder = true
+		else
+			db.overlay.showIconBorder = not db.overlay.showIconBorder
+		end
+		ns.Frames:Relayout()
+		ns.Print("marker icon border " .. OnOff(db.overlay.showIconBorder) .. " (" .. db.overlay.iconBorderSize .. "px)")
 	elseif cmd == "iconborder" then
 		if tonumber(rest) then
 			db.icon.borderSize = math.max(1, math.min(10, math.floor(tonumber(rest))))
@@ -142,7 +152,7 @@ local function Handler(msg)
 	elseif cmd == "border" then
 		db.overlay.showBorder = not db.overlay.showBorder
 		ns.Frames:Relayout()
-		ns.Print("frame border " .. OnOff(db.overlay.showBorder))
+		ns.Print("raid frame border " .. OnOff(db.overlay.showBorder))
 	elseif cmd == "pattern" then
 		Pattern(rest)
 	elseif cmd == "frames" then

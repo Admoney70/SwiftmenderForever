@@ -26,9 +26,12 @@ ns.defaults = {
 		showIcon = true,
 		showSpiral = true,       -- HoT duration spiral on the marker icon
 		showTimer = true,        -- countdown text for the last 10 seconds
-		showBorder = true,
+		showBorder = true,      -- border around the whole raid frame
 		borderSize = 2,
-		borderColor = { 0.2, 1.0, 0.4, 0.9 },
+		borderColor = "Green",
+		showIconBorder = true,  -- border around the marker icon
+		iconBorderSize = 1,
+		iconBorderColor = "Black",
 		patterns = {
 			blizzard = { "^CompactRaid", "^CompactParty" },
 			buzzard = { "^Buzzard", "^BF[_%u]" },
@@ -43,7 +46,7 @@ ns.defaults = {
 		cooldownAlpha = 0.35,  -- alpha when they can but Swiftmend is on cooldown
 		showBorder = true,
 		borderSize = 2,
-		borderColor = { 0.2, 1.0, 0.4, 0.9 },
+		borderColor = "Green",
 		point = { "CENTER", "UIParent", "CENTER", 0, -150 },
 	},
 }
@@ -82,6 +85,21 @@ function ns.ResetDB()
 	ns.db = SwiftmenderForeverDB
 end
 
+ns.BORDER_COLORS = {
+	Green = { 0.2, 1.0, 0.4, 0.9 },
+	Black = { 0, 0, 0, 1 },
+	White = { 1, 1, 1, 1 },
+	Gold = { 1, 0.82, 0, 1 },
+	Red = { 1, 0.2, 0.2, 1 },
+	Blue = { 0.3, 0.6, 1, 1 },
+}
+ns.BORDER_COLOR_NAMES = { "Green", "Black", "White", "Gold", "Red", "Blue" }
+
+-- Saved colours are names; older saves hold an RGBA table (the old green).
+function ns.ColorName(v)
+	return type(v) == "string" and ns.BORDER_COLORS[v] and v or "Green"
+end
+
 -- Lays out four edge textures as a border around `anchor`; `outside` puts
 -- the border just outside the anchor instead of on its inner edge.
 function ns.LayoutEdges(edges, anchor, size, color, shown, outside)
@@ -103,7 +121,7 @@ function ns.LayoutEdges(edges, anchor, size, color, shown, outside)
 	right:SetPoint("TOPRIGHT", anchor, "TOPRIGHT", o, o)
 	right:SetPoint("BOTTOMRIGHT", anchor, "BOTTOMRIGHT", o, -o)
 	right:SetWidth(size)
-	local r, g, b, a = unpack(color)
+	local r, g, b, a = unpack(ns.BORDER_COLORS[ns.ColorName(color)])
 	for i = 1, 4 do
 		edges[i]:SetVertexColor(r, g, b, a)
 		edges[i]:SetShown(shown)

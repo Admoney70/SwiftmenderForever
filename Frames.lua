@@ -56,6 +56,8 @@ local function LayoutOverlay(o)
 	o.timer:SetShown(cfg.showIcon and cfg.showTimer)
 
 	ns.LayoutEdges(o.edges, o, cfg.borderSize, cfg.borderColor, cfg.showBorder)
+	ns.LayoutEdges(o.iconEdges, o.icon, cfg.iconBorderSize, cfg.iconBorderColor,
+		cfg.showIcon and cfg.showIconBorder, true)
 end
 
 -- Styles the native slot button. Runs inside initializeFrame (every time
@@ -87,6 +89,7 @@ local function DecorateNative(o, button)
 		button.smTimer:SetPoint("CENTER", button, "CENTER", 0, 0)
 
 		button.smEdges = ns.CreateEdges(button)
+		button.smIconEdges = ns.CreateEdges(textHost, 5)
 	end
 
 	button:ClearAllPoints()
@@ -112,6 +115,8 @@ local function DecorateNative(o, button)
 	-- the border hangs off the native button (so it shares its visibility)
 	-- but outlines the whole raid frame
 	ns.LayoutEdges(button.smEdges, o, cfg.borderSize, cfg.borderColor, cfg.showBorder)
+	ns.LayoutEdges(button.smIconEdges, button, cfg.iconBorderSize, cfg.iconBorderColor,
+		cfg.showIcon and cfg.showIconBorder, true)
 end
 
 local function CreateOverlay(frame, provider)
@@ -148,6 +153,7 @@ local function CreateOverlay(frame, provider)
 	text:SetFrameLevel(o.spiral:GetFrameLevel() + 2)
 	o.timer = text:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
 	o.timer:SetPoint("CENTER", o.icon, "CENTER", 0, 0)
+	o.iconEdges = ns.CreateEdges(text, 5)
 
 	o.edges = ns.CreateEdges(o)
 	LayoutOverlay(o)

@@ -105,16 +105,18 @@ end
 -- "< TOPRIGHT >" picker, avoids the deprecated dropdown menus.
 local function Cycle(parent, label, y, values, get, set, what)
 	local f = CreateFrame("Frame", nil, parent)
-	f:SetSize(260, 22)
+	f:SetSize(290, 22)
 	f:SetPoint("TOPLEFT", 26, y)
 	local text = f:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
 	text:SetPoint("LEFT")
+	text:SetWidth(126)
+	text:SetJustifyH("LEFT")
 	text:SetText(label)
 	local prev = Button(f, "<", 24)
-	prev:SetPoint("LEFT", 70, 0)
+	prev:SetPoint("LEFT", 130, 0)
 	f.value = f:CreateFontString(nil, "ARTWORK", "GameFontNormal")
 	f.value:SetPoint("LEFT", prev, "RIGHT", 4, 0)
-	f.value:SetWidth(110)
+	f.value:SetWidth(96)
 	local nextB = Button(f, ">", 24)
 	nextB:SetPoint("LEFT", f.value, "RIGHT", 4, 0)
 
@@ -153,7 +155,7 @@ local function Build()
 		local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
 		close:SetPoint("TOPRIGHT", -4, -4)
 	end
-	f:SetSize(680, 520)
+	f:SetSize(680, 660)
 	f:SetPoint("CENTER")
 	f:SetFrameStrata("DIALOG")
 	f:SetClampedToScreen(true)
@@ -204,6 +206,9 @@ local function Build()
 	_, y = Slider(left, "Border thickness", y, 1, 10, 1,
 		function() return db().icon.borderSize end,
 		function(v) db().icon.borderSize = v end, "icon")
+	_, y = Cycle(left, "Border color", y, ns.BORDER_COLOR_NAMES,
+		function() return ns.ColorName(db().icon.borderColor) end,
+		function(v) db().icon.borderColor = v end, "icon")
 	local resetPos = Button(left, "Reset position", 130)
 	resetPos:SetPoint("TOPLEFT", 26, y)
 	resetPos:SetScript("OnClick", function() ns.Icon:ResetPosition() end)
@@ -249,12 +254,24 @@ local function Build()
 	_, y = Check(right, "Show countdown timer on the marker", y,
 		function() return db().overlay.showTimer end,
 		function(v) db().overlay.showTimer = v end, "frames")
-	_, y = Check(right, "Show border", y,
+	_, y = Check(right, "Show border around the marker icon", y,
+		function() return db().overlay.showIconBorder end,
+		function(v) db().overlay.showIconBorder = v end, "frames")
+	_, y = Slider(right, "Marker border thickness", y, 1, 10, 1,
+		function() return db().overlay.iconBorderSize end,
+		function(v) db().overlay.iconBorderSize = v end, "frames")
+	_, y = Cycle(right, "Marker border color", y, ns.BORDER_COLOR_NAMES,
+		function() return ns.ColorName(db().overlay.iconBorderColor) end,
+		function(v) db().overlay.iconBorderColor = v end, "frames")
+	_, y = Check(right, "Show border around the raid frame", y,
 		function() return db().overlay.showBorder end,
 		function(v) db().overlay.showBorder = v end, "frames")
-	_, y = Slider(right, "Border thickness", y, 1, 10, 1,
+	_, y = Slider(right, "Frame border thickness", y, 1, 10, 1,
 		function() return db().overlay.borderSize end,
 		function(v) db().overlay.borderSize = v end, "frames")
+	_, y = Cycle(right, "Frame border color", y, ns.BORDER_COLOR_NAMES,
+		function() return ns.ColorName(db().overlay.borderColor) end,
+		function(v) db().overlay.borderColor = v end, "frames")
 	_, y = Slider(right, "Marker size", y, 6, 40, 1,
 		function() return db().overlay.size end,
 		function(v) db().overlay.size = v end, "frames")
