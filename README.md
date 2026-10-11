@@ -6,11 +6,12 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
 ## Features
 
 - **Raid frame markers:** a Swiftmend icon and a green border on every group member who can be
-  Swiftmended, with a countdown for the last 10 seconds of the HoT.
+  Swiftmended. The icon can show a spiral for the HoT's remaining duration and a countdown for its
+  last 10 seconds; each can be turned off.
   - Blizzard raid and party frames (`CompactRaidFrame…`, `CompactPartyFrame…`, `CompactRaidGroup…`)
   - [Buzzard Frames](https://www.curseforge.com/wow/addons/buzzard-frames) (frames named `Buzzard…` / `BF_…`)
 - **Draggable alert icon:** tracks your **target** only. It lights up and glows when your friendly target
-  (never yourself) can be Swiftmended, showing their name and how long the HoT has left.
+  (including yourself, when you target yourself) can be Swiftmended, showing their name and how long the HoT has left.
   - While Swiftmend is on cooldown, the icon fades and shows the cooldown swipe.
   - When your target can't be Swiftmended, the icon is hidden.
 - Works with the Midnight-style "secret value" addon API that WoW Forever uses. Auras are looked up by
@@ -30,7 +31,7 @@ to the `## Interface:` line.
 Type **`/sm`** (or `/swiftmender`) to open the settings window. You can also reach it from
 Esc > Options > AddOns > Swiftmender Forever. The window covers the target icon (show, lock, size,
 cooldown fade, reset position), the raid frame markers (Blizzard and Buzzard on/off, marker icon,
-border, size, position, offsets) and whether to count only your own HoTs.
+HoT spiral, countdown timer, border, size, position, offsets) and whether to count only your own HoTs.
 
 The target icon starts **unlocked**. Drag it where you want it, then right-click it or tick
 "Lock position".
@@ -48,6 +49,7 @@ The target icon starts **unlocked**. Drag it where you want it, then right-click
 | `/sm size <n>` | Set the raid frame marker size (default 14) |
 | `/sm anchor <point> [x y]` | Move the marker, e.g. `/sm anchor TOPRIGHT -2 -2` |
 | `/sm marker` / `/sm border` | Turn the marker icon or the green border on or off |
+| `/sm spiral` / `/sm timer` | Turn the marker's HoT duration spiral or countdown timer on or off |
 | `/sm pattern add\|remove\|list <blizzard\|buzzard> <lua pattern>` | Change which frame names get markers |
 | `/sm frames` | List unit frames that don't have a marker yet, to help find their names |
 | `/sm scan`, `/sm status`, `/sm reset` | Rescan for frames, show the current settings, or reset to defaults |

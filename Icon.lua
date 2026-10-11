@@ -1,5 +1,5 @@
 -- Swiftmender Forever: draggable alert icon.
--- Lights up when your friendly target (never yourself) can be Swiftmended,
+-- Lights up when your friendly target (including yourself) can be Swiftmended,
 -- showing their name and the HoT time left. Fades while Swiftmend is on
 -- cooldown.
 
@@ -99,9 +99,7 @@ local function FriendlyTarget()
 	local exists = UnitExists("target")
 	if IsSecret(exists) or not exists then return false end
 	local friend = UnitIsFriend("player", "target")
-	if IsSecret(friend) or not friend then return false end
-	local isSelf = UnitIsUnit("target", "player")
-	return not IsSecret(isSelf) and not isSelf
+	return not IsSecret(friend) and friend or false
 end
 
 -- True while Swiftmend is on its own cooldown (the global cooldown alone

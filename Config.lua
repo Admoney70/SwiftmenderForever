@@ -150,7 +150,7 @@ local function Build()
 		local close = CreateFrame("Button", nil, f, "UIPanelCloseButton")
 		close:SetPoint("TOPRIGHT", -4, -4)
 	end
-	f:SetSize(340, 650)
+	f:SetSize(340, 700)
 	f:SetPoint("CENTER")
 	f:SetFrameStrata("DIALOG")
 	f:SetClampedToScreen(true)
@@ -201,6 +201,12 @@ local function Build()
 	_, y = Check(f, "Show Swiftmend marker icon", y,
 		function() return db().overlay.showIcon end,
 		function(v) db().overlay.showIcon = v end, "frames")
+	_, y = Check(f, "Show HoT duration spiral on the marker", y,
+		function() return db().overlay.showSpiral end,
+		function(v) db().overlay.showSpiral = v end, "frames")
+	_, y = Check(f, "Show countdown timer on the marker", y,
+		function() return db().overlay.showTimer end,
+		function(v) db().overlay.showTimer = v end, "frames")
 	_, y = Check(f, "Show green border", y,
 		function() return db().overlay.showBorder end,
 		function(v) db().overlay.showBorder = v end, "frames")

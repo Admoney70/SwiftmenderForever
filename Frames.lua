@@ -53,6 +53,11 @@ local function LayoutOverlay(o)
 	o.icon:SetSize(size, size)
 	o.icon:SetPoint(cfg.point, o, cfg.point, cfg.offsetX, cfg.offsetY)
 	o.icon:SetShown(cfg.showIcon)
+	o.spiral:ClearAllPoints()
+	o.spiral:SetAllPoints(o.icon)
+	o.spiralKey = nil
+	if not (cfg.showIcon and cfg.showSpiral) then o.spiral:Hide() end
+	o.timer:SetShown(cfg.showIcon and cfg.showTimer)
 
 	local r, g, b, a = unpack(cfg.borderColor)
 	local t = 2
@@ -81,7 +86,18 @@ local function CreateOverlay(frame, provider)
 	o.icon:SetTexture(ns.SpellTexture(ns.SPELLS.SWIFTMEND))
 	o.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
-	o.timer = o:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
+	-- HoT duration spiral over the marker icon
+	o.spiral = CreateFrame("Cooldown", nil, o, "CooldownFrameTemplate")
+	o.spiral:SetReverse(true)
+	o.spiral:SetDrawEdge(false)
+	o.spiral:SetHideCountdownNumbers(true)
+	o.spiral:Hide()
+
+	-- the timer sits above the spiral
+	local text = CreateFrame("Frame", nil, o)
+	text:SetAllPoints(o)
+	text:SetFrameLevel(o.spiral:GetFrameLevel() + 2)
+	o.timer = text:CreateFontString(nil, "OVERLAY", "NumberFontNormalSmall")
 	o.timer:SetPoint("CENTER", o.icon, "CENTER", 0, 0)
 
 	o.edges = { CreateEdge(o), CreateEdge(o), CreateEdge(o), CreateEdge(o) }
@@ -100,6 +116,38 @@ function Frames:Attach(frame, provider)
 	end
 end
 
+local function UpdateSpiral(o, unit, aura)
+	local cfg = ns.db.overlay
+	local cd = o.spiral
+	if not (cfg.showIcon and cfg.showSpiral and aura) then
+		cd:Hide()
+		o.spiralKey = nil
+		return
+	end
+	local exp, dur = aura.expirationTime, aura.duration
+	if not IsSecret(exp) and not IsSecret(dur) then
+		if not exp or not dur or exp == 0 or dur == 0 then
+			cd:Hide()
+			o.spiralKey = nil
+		elseif o.spiralKey ~= exp then
+			o.spiralKey = exp
+			cd:SetCooldown(exp - dur, dur)
+			cd:Show()
+		end
+		return
+	end
+	-- times are secret in combat: hand the widget a duration object instead
+	o.spiralKey = nil
+	local shown = false
+	if C_UnitAuras.GetAuraDuration and cd.SetCooldownFromDurationObject then
+		local ok, durObj = pcall(C_UnitAuras.GetAuraDuration, unit, aura.auraInstanceID)
+		if ok and not IsSecret(durObj) and durObj ~= nil then
+			shown = pcall(cd.SetCooldownFromDurationObject, cd, durObj)
+		end
+	end
+	cd:SetShown(shown)
+end
+
 function Frames:UpdateFrame(frame)
 	local o = overlays[frame]
 	if not o then return end
@@ -111,8 +159,9 @@ function Frames:UpdateFrame(frame)
 	end
 	local can, aura = ns.Evaluate(unit)
 	if can then
-		local left = ns.Remaining(aura)
-		o.timer:SetText(left and left < 10 and ns.db.overlay.showIcon and string.format("%d", left + 0.5) or "")
+		local left = ns.db.overlay.showTimer and ns.Remaining(aura)
+		o.timer:SetText(left and left < 10 and string.format("%d", left + 0.5) or "")
+		UpdateSpiral(o, unit, aura)
 		o:Show()
 	else
 		o:Hide()

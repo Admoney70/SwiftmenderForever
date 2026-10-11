@@ -21,6 +21,7 @@ local function Help()
 	print("  /sm size <n>           - raid-frame marker size (default 14)")
 	print("  /sm anchor <point> [x y] - marker position, e.g. TOPRIGHT -2 -2")
 	print("  /sm marker | border    - toggle the marker icon / green border")
+	print("  /sm spiral | timer     - toggle the marker's HoT spiral / countdown")
 	print("  /sm pattern add|remove|list <blizzard|buzzard> <lua pattern>")
 	print("  /sm frames             - list unit frames that aren't hooked yet")
 	print("  /sm scan               - rescan for raid frames")
@@ -115,6 +116,11 @@ local function Handler(msg)
 		db.overlay.showIcon = not db.overlay.showIcon
 		ns.Frames:Relayout()
 		ns.Print("frame marker icon " .. OnOff(db.overlay.showIcon))
+	elseif cmd == "spiral" or cmd == "timer" then
+		local key = cmd == "spiral" and "showSpiral" or "showTimer"
+		db.overlay[key] = not db.overlay[key]
+		ns.Frames:Relayout()
+		ns.Print("frame marker " .. cmd .. " " .. OnOff(db.overlay[key]))
 	elseif cmd == "border" then
 		db.overlay.showBorder = not db.overlay.showBorder
 		ns.Frames:Relayout()
