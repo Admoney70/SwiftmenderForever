@@ -58,6 +58,7 @@ ns.defaults = {
 		showBorder = true,
 		borderSize = 2,
 		borderColor = "Green",
+		trackSelf = true,      -- follow yourself with no target or an enemy target
 		overhealGlow = true,   -- glow when Swiftmend won't overheal the target
 		glowColor = "Gold",
 		glowStyle = "Glow",    -- Glow, Proc (ability activation) or Pixel
@@ -354,7 +355,7 @@ events:SetScript("OnEvent", function(self, event, arg1)
 		if ns.db.overlay.noOverheal and ValidUnit(arg1) then
 			ns.Frames:RefreshUnit(arg1)
 		end
-		if arg1 == "target" and ns.db.icon.overhealGlow then
+		if (arg1 == "target" or arg1 == "player") and ns.db.icon.overhealGlow then
 			ns.Icon:Refresh()
 		end
 	elseif event == "PLAYER_TARGET_CHANGED" then

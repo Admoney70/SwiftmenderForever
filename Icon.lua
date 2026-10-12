@@ -1,13 +1,14 @@
 -- Swiftmender Forever: draggable target icon.
 -- Shows greyed out, and lights up when your target (including yourself)
--- can be Swiftmended,
+-- can be Swiftmended; with no friendly target it follows you instead,
 -- showing their name and the HoT time left. Behaves like an action button:
 -- a cooldown spiral (and fade) while Swiftmend is on cooldown, a red tint
 -- when the target is out of range, blue when you lack the mana, and
 -- desaturated when Swiftmend can't be used. Optionally glows while the
 -- target is missing enough health that Swiftmend won't overheal.
 --
--- In combat the lit icon comes from native aura sensors on "target"
+-- In combat the lit icon comes from native aura sensors on "target" (and a
+-- second set on "player", swapped in when there's no friendly target)
 -- (Native.lua). Those buttons can't be restyled while auras are secret, so
 -- there is one sensor per look (normal / range / mana / unusable), each
 -- styled once, and we switch looks by showing only that sensor's parent
@@ -80,12 +81,13 @@ local function Usability(spell)
 end
 
 -- nil when unknown (no target, secret, or no range data)
-local function InRange(spell)
+local function InRange(spell, unit)
+	if unit == "player" then return true end
 	local r
 	if C_Spell and C_Spell.IsSpellInRange then
-		r = C_Spell.IsSpellInRange(spell, "target")
+		r = C_Spell.IsSpellInRange(spell, unit)
 	elseif IsSpellInRange then
-		r = IsSpellInRange(ns.SpellName(spell) or "Swiftmend", "target")
+		r = IsSpellInRange(ns.SpellName(spell) or "Swiftmend", unit)
 		if r == 1 then r = true elseif r == 0 then r = false end
 	end
 	if IsSecret(r) then return nil end
@@ -117,11 +119,11 @@ local function OnCooldown(spell)
 end
 
 -- Which look the icon should have right now.
-local function CurrentState(cfg, spell)
+local function CurrentState(cfg, spell, unit)
 	local usable, noMana = Usability(spell)
 	if noMana and cfg.tintMana then return "mana" end
 	if not usable and cfg.desatUnusable then return "unusable" end
-	if cfg.tintRange and InRange(spell) == false then return "range" end
+	if cfg.tintRange and InRange(spell, unit) == false then return "range" end
 	return "normal"
 end
 
@@ -131,9 +133,9 @@ end
 
 -- Styles one native slot button (see Native.lua for the rules). Runs each
 -- time Blizzard creates the button, so it is also how settings and the
--- target's name reach it.
-local function DecorateTarget(b, state)
-	button.natives[state] = b
+-- unit's name reach it.
+local function DecorateTarget(b, set, state)
+	set.natives[state] = b
 	if b.SetMouseClickEnabled then b:SetMouseClickEnabled(false) end
 	if b.SetMouseMotionEnabled then b:SetMouseMotionEnabled(false) end
 	b:ClearAllPoints()
@@ -163,13 +165,13 @@ local function DecorateTarget(b, state)
 		b.smTimer:Hide()
 	end
 	-- the button is recreated for each new aura, so this follows target swaps
-	b.smLabel:SetText(UnitName("target"))
+	b.smLabel:SetText(UnitName(set.unit))
 end
 
--- The glow sensor's button: no icon, just the glow, shown while the target
+-- The glow sensor's button: no icon, just the glow, shown while the unit
 -- has the HoT.
-local function DecorateGlow(b)
-	button.glowNative = b
+local function DecorateGlow(b, set)
+	set.glowNative = b
 	if b.SetMouseClickEnabled then b:SetMouseClickEnabled(false) end
 	if b.SetMouseMotionEnabled then b:SetMouseMotionEnabled(false) end
 	b:ClearAllPoints()
@@ -179,34 +181,50 @@ local function DecorateGlow(b)
 	ns.Glow.Apply(b.smGlow, ns.db.icon)
 end
 
-local function CreateGlowSensor()
+-- One full set of sensors (a proxy per look, plus the glow) for one unit,
+-- under a root frame of ours so the whole set can be swapped in combat.
+local function CreateSet(unit)
+	local set = { unit = unit, proxies = {}, sensors = {}, natives = {} }
+	set.root = CreateFrame("Frame", nil, button)
+	set.root:SetAllPoints(button)
+	for i, state in ipairs(STATES) do
+		local proxy = CreateFrame("Frame", nil, set.root)
+		proxy:SetAllPoints(button)
+		proxy:SetFrameLevel(button:GetFrameLevel() + i)
+		local sensor = ns.Native.CreateSensor(proxy, unit, function(b) DecorateTarget(b, set, state) end)
+		if not sensor then return end
+		proxy:SetShown(state == "normal")
+		set.proxies[state], set.sensors[state] = proxy, sensor
+	end
 	-- glowGate (overheal alpha) -> glow sensor
-	button.glowGate = CreateFrame("Frame", nil, button)
-	button.glowGate:SetAllPoints(button)
-	button.glowGate:SetFrameLevel(button:GetFrameLevel() + 10)
-	button.glowSensor = ns.Native.CreateSensor(button.glowGate, "target", DecorateGlow)
+	set.glowGate = CreateFrame("Frame", nil, set.root)
+	set.glowGate:SetAllPoints(button)
+	set.glowGate:SetFrameLevel(button:GetFrameLevel() + 10)
+	set.glowSensor = ns.Native.CreateSensor(set.glowGate, unit, function(b) DecorateGlow(b, set) end)
+	set.state = "normal"
+	return set
 end
 
 local function CreateSensors()
-	button.proxies, button.sensors, button.natives = {}, {}, {}
-	for i, state in ipairs(STATES) do
-		local proxy = CreateFrame("Frame", nil, button)
-		proxy:SetAllPoints(button)
-		proxy:SetFrameLevel(button:GetFrameLevel() + i)
-		local sensor = ns.Native.CreateSensor(proxy, "target", function(b) DecorateTarget(b, state) end)
-		if not sensor then return false end
-		proxy:SetShown(state == "normal")
-		button.proxies[state], button.sensors[state] = proxy, sensor
-	end
-	button.state = "normal"
-	CreateGlowSensor()
+	local target, player = CreateSet("target"), CreateSet("player")
+	if not (target and player) then return false end
+	button.sets = { target = target, player = player }
+	button.sensors = true
+	player.root:Hide()
+	button.active = "target"
 	return true
 end
 
-local function ShowState(state)
-	if button.state == state then return end
-	button.state = state
-	for s, proxy in pairs(button.proxies) do proxy:SetShown(s == state) end
+local function ShowSet(unit)
+	if button.active == unit then return end
+	button.active = unit
+	for u, set in pairs(button.sets) do set.root:SetShown(u == unit) end
+end
+
+local function ShowState(set, state)
+	if set.state == state then return end
+	set.state = state
+	for s, proxy in pairs(set.proxies) do proxy:SetShown(s == state) end
 end
 
 --------------------------------------------------------------------------
@@ -291,8 +309,10 @@ local function StyleNatives()
 		return
 	end
 	pendingStyle = nil
-	for state, b in pairs(button.natives) do DecorateTarget(b, state) end
-	if button.glowNative then DecorateGlow(button.glowNative) end
+	for _, set in pairs(button.sets) do
+		for state, b in pairs(set.natives) do DecorateTarget(b, set, state) end
+		if set.glowNative then DecorateGlow(set.glowNative, set) end
+	end
 end
 
 function Icon:Layout()
@@ -314,12 +334,29 @@ function Icon:Layout()
 	self:Refresh()
 end
 
-local function FriendlyTarget()
+-- Whether the target can be helped: true, false, or nil when that's secret.
+local function TargetHelpable()
 	local exists = UnitExists("target")
-	if IsSecret(exists) or not exists then return false end
-	local friend = UnitIsFriend("player", "target")
-	return not IsSecret(friend) and friend or false
+	if IsSecret(exists) then return nil end
+	if not exists then return false end
+	local ok = UnitCanAssist and UnitCanAssist("player", "target")
+	if ok == nil or IsSecret(ok) then ok = UnitIsFriend("player", "target") end
+	if IsSecret(ok) then return nil end
+	return ok and true or false
 end
+
+local function FriendlyTarget()
+	return TargetHelpable() == true
+end
+
+-- The unit the icon follows: your target when it's friendly (yourself
+-- included), otherwise yourself when that option is on. When friendliness
+-- is unreadable it stays on the target.
+local function TrackedUnit()
+	if ns.db.icon.trackSelf and TargetHelpable() == false then return "player" end
+	return "target"
+end
+Icon.TrackedUnit = TrackedUnit
 
 function Icon:Refresh()
 	if not button then return end
@@ -331,13 +368,17 @@ function Icon:Refresh()
 	end
 	button:Show()
 
+	local unit = TrackedUnit()
 	local spell = SwiftmendSpell()
 	local onCD = OnCooldown(spell)
-	local state = CurrentState(cfg, spell)
+	local state = CurrentState(cfg, spell, unit)
 	local spiral = onCD and cfg.showCooldown
+	local helpable = unit == "player" or FriendlyTarget()
 
 	if button.sensors then
-		ShowState(state)
+		ShowSet(unit)
+		local set = button.sets[unit]
+		ShowState(set, state)
 		-- The greyed base icon is ours and always drawn; the native button
 		-- covers it with the lit icon only while the target has the HoT, so
 		-- this needs no aura data and works in combat.
@@ -345,7 +386,7 @@ function Icon:Refresh()
 		-- Without the base, out of combat we know whether the icon is lit; in
 		-- combat we don't, so the spiral then sits on a faint ghost icon.
 		local known = ns.Native.Mutable()
-		local lit = known and FriendlyTarget() and ns.Evaluate("target")
+		local lit = known and helpable and ns.Evaluate(unit)
 		local showSpiral = spiral and (showBase or lit or not known)
 		button.cooldown:SetAlpha(showSpiral and 1 or 0)
 		ApplyLook(button.tex, "unusable")
@@ -365,17 +406,17 @@ function Icon:Refresh()
 		button.label:SetText("")
 		button.timer:SetText("")
 		button.glowHost:Hide()
-		if button.glowGate then
-			-- the sensor only draws while the target has the HoT; the gate
-			-- hides it unless the target is missing at least the heal
+		if set.glowGate then
+			-- the sensor only draws while the unit has the HoT; the gate
+			-- hides it unless the unit is missing at least the heal
 			-- (friendliness can be secret in combat; the HoT implies it)
 			local alpha = 0
-			local exists = UnitExists("target")
+			local exists = UnitExists(unit)
 			if cfg.overhealGlow and (IsSecret(exists) or exists) then
-				alpha = ns.Overheal.FitsAlpha("target", 0)
+				alpha = ns.Overheal.FitsAlpha(unit, 0)
 				if not IsSecret(alpha) and type(alpha) ~= "number" then alpha = 0 end
 			end
-			button.glowGate:SetAlpha(alpha)
+			set.glowGate:SetAlpha(alpha)
 		end
 		if onCD then button:SetAlpha(cfg.cooldownAlpha) else button:SetAlpha(1) end
 		return
@@ -384,19 +425,19 @@ function Icon:Refresh()
 	button.tex:Show()
 	button.tex:SetAlpha(1)
 	local can, aura = false, nil
-	if FriendlyTarget() then
-		can, aura = ns.Evaluate("target")
+	if helpable then
+		can, aura = ns.Evaluate(unit)
 	end
 
 	if can then
 		if onCD then button:SetAlpha(cfg.cooldownAlpha) else button:SetAlpha(1) end
 		ApplyLook(button.tex, state)
 		button.cooldown:SetAlpha(spiral and 1 or 0)
-		local name = UnitName("target")
+		local name = UnitName(unit)
 		button.label:SetText(not IsSecret(name) and name or "")
 		local left = ns.Remaining(aura)
 		button.timer:SetText(cfg.showTimer and left and string.format("%d", left + 0.5) or "")
-		button.glowHost:SetShown(cfg.overhealGlow and ns.Overheal.Fits("target") == true)
+		button.glowHost:SetShown(cfg.overhealGlow and ns.Overheal.Fits(unit) == true)
 	else
 		button.glowHost:Hide()
 		-- greyed when the target has no HoT (or there's no target)
@@ -421,9 +462,11 @@ end
 -- Same "target" token, different unit: make the sensors re-read it.
 function Icon:TargetChanged()
 	if not (button and button.sensors) then return end
-	for _, sensor in pairs(button.sensors) do ns.Native.Update(sensor) end
+	local set = button.sets.target
+	for _, sensor in pairs(set.sensors) do ns.Native.Update(sensor) end
+	if set.glowSensor then ns.Native.Update(set.glowSensor) end
 	if ns.Native.Mutable() then
-		for _, b in pairs(button.natives) do b.smLabel:SetText(UnitName("target")) end
+		for _, b in pairs(set.natives) do b.smLabel:SetText(UnitName("target")) end
 	end
 end
 

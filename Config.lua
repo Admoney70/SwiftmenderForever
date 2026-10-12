@@ -214,6 +214,9 @@ local function Build()
 	_, y = Check(left, "Lock position (unlock to drag it)", y,
 		function() return db().icon.locked end,
 		function(v) db().icon.locked = v end, "icon")
+	_, y = Check(left, "Track myself with no target or an enemy target", y,
+		function() return db().icon.trackSelf end,
+		function(v) db().icon.trackSelf = v end, "icon")
 	_, y = Check(left, "Hide if I don't know Swiftmend", y,
 		function() return db().icon.onlyWhenKnown end,
 		function(v) db().icon.onlyWhenKnown = v end, "icon")

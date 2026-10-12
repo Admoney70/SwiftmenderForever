@@ -14,6 +14,7 @@ local function Help()
 	ns.Print("/sm opens the settings window. Shortcuts:")
 	print("  /sm lock | unlock      - lock or move the target icon")
 	print("  /sm icon               - toggle the target icon")
+	print("  /sm self               - toggle following yourself with no friendly target")
 	print("  /sm iconsize <n>       - target icon size (default 48)")
 	print("  /sm fade <0-1>         - icon alpha while Swiftmend is on cooldown")
 	print("  /sm mine               - only count your own Rejuv/Regrowth")
@@ -94,6 +95,10 @@ local function Handler(msg)
 		db.icon.enabled = not db.icon.enabled
 		ns.Icon:Layout()
 		ns.Print("icon " .. OnOff(db.icon.enabled))
+	elseif cmd == "self" then
+		db.icon.trackSelf = not db.icon.trackSelf
+		ns.Icon:Refresh()
+		ns.Print("icon follows you with no friendly target: " .. OnOff(db.icon.trackSelf))
 	elseif cmd == "iconsize" and tonumber(rest) then
 		db.icon.size = math.max(16, math.min(200, tonumber(rest)))
 		ns.Icon:Layout()

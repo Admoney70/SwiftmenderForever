@@ -1,5 +1,11 @@
 # Swiftmender Forever
 
+## 1.5.0
+
+- With no target or an enemy target, the target icon now tracks you: your HoTs, your name, and the
+  overheal glow for your own health. On by default; toggle it in the settings window or with `/sm self`.
+  Works in combat.
+
 ## 1.4.0
 
 - Glow styles for the target icon's overheal glow: **Glow** (the static ring, as before), **Proc** (the

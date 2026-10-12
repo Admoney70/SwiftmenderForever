@@ -16,8 +16,9 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
     threshold per player, using max health remembered from out of combat.
   - Blizzard raid and party frames (`CompactRaidFrame…`, `CompactPartyFrame…`, `CompactRaidGroup…`)
   - [Buzzard Frames](https://www.curseforge.com/wow/addons/buzzard-frames) (frames named `Buzzard…` / `BF_…`)
-- **Draggable alert icon:** tracks your **target** only. It lights up when your friendly target
+- **Draggable alert icon:** tracks your **target**. It lights up when your friendly target
   (including yourself, when you target yourself) can be Swiftmended, showing their name and how long the HoT has left.
+  With no target or an enemy target it tracks **you** instead (turn off with "Track myself…" or `/sm self`).
   - Behaves like an action button:
     - **HoT time left** in the corner (can be hidden; the spirals still show).
     - **Cooldown spiral** while Swiftmend is on cooldown (the global cooldown is ignored), and the icon fades.
@@ -83,6 +84,7 @@ The target icon starts **unlocked**. Drag it where you want it, then right-click
 | `/sm markerborder [1-10]` | Turn the marker icon's border on or off, or set its thickness |
 | `/sm bordersize <1-10>` | Set the raid frame border thickness (default 2) |
 | `/sm icontimer` | Show or hide the HoT time left on the target icon |
+| `/sm self` | Turn on or off following yourself when you have no friendly target |
 | `/sm glow [glow\|proc\|pixel]` | Turn the target icon's overheal glow on or off, or set its style |
 | `/sm iconborder [1-10]` | Turn the target icon border on or off, or set its thickness |
 | `/sm spiral` / `/sm timer` | Turn the marker's HoT duration spiral or countdown timer on or off |
