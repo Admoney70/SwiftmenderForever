@@ -1,4 +1,5 @@
--- Swiftmender Forever: "won't overheal" gate for the raid-frame markers.
+-- Swiftmender Forever: "won't overheal" gate for the raid-frame markers and
+-- the target icon's glow.
 --
 -- Swiftmend consumes the HoT and heals for (roughly) a full Rejuvenation,
 -- so a marker is only useful when the unit is missing at least that much.
@@ -97,21 +98,27 @@ function Overheal.Supported()
 		and Enum and Enum.LuaCurveType and Enum.LuaCurveType.Step ~= nil
 end
 
--- Alpha for the unit's marker gate. May be a secret number (fine for
--- SetAlpha). 1 when the option is off or the heal/max health is unknown.
-function Overheal.Alpha(unit)
-	if not ns.db.overlay.noOverheal or not Overheal.Supported() then return 1 end
+-- 1 when the unit is missing at least the heal, else 0. May be a secret
+-- number (fine for SetAlpha). `unknown` when the heal or max health isn't
+-- known (or the API is missing).
+function Overheal.FitsAlpha(unit, unknown)
+	if not Overheal.Supported() then return unknown end
 	local t = Threshold(unit)
-	if not t then return 1 end
+	if not t then return unknown end
 	return UnitHealthPercent(unit, ns.db.overlay.overhealPredicted and true or false, CurveFor(unit, t))
 end
 
--- Plain yes/no for the out-of-combat fallback path (nil = unknown).
-function Overheal.Allows(unit)
-	if not ns.db.overlay.noOverheal then return true end
+-- Alpha for the unit's marker gate: 1 when the option is off or unknown.
+function Overheal.Alpha(unit)
+	if not ns.db.overlay.noOverheal then return 1 end
+	return Overheal.FitsAlpha(unit, 1)
+end
+
+-- Plain yes/no from readable health (nil = unknown, e.g. secret).
+function Overheal.Fits(unit)
 	local heal = Overheal.HealAmount()
 	local hp, max = UnitHealth(unit), UnitHealthMax(unit)
-	if not heal or not Readable(max) or IsSecret(hp) or type(hp) ~= "number" then return true end
+	if not heal or not Readable(max) or IsSecret(hp) or type(hp) ~= "number" then return nil end
 	if ns.db.overlay.overhealPredicted and UnitGetIncomingHeals then
 		local inc = UnitGetIncomingHeals(unit)
 		if not IsSecret(inc) and type(inc) == "number" then hp = hp + inc end
@@ -119,9 +126,33 @@ function Overheal.Allows(unit)
 	return max - hp >= heal
 end
 
+-- Marker gate for the out-of-combat fallback path.
+function Overheal.Allows(unit)
+	if not ns.db.overlay.noOverheal then return true end
+	return Overheal.Fits(unit) ~= false
+end
+
+-- "target" is a different unit after a target swap: drop its cached max
+-- health, re-read it, or borrow it from the group unit it matches.
+function Overheal.TargetChanged()
+	maxHealth.target = nil
+	Overheal.UpdateUnit("target")
+	if maxHealth.target then return end
+	for _, unit in ipairs(ns.GroupUnits()) do
+		local same = UnitIsUnit("target", unit)
+		if not IsSecret(same) and same and maxHealth[unit] then
+			maxHealth.target = maxHealth[unit]
+			return
+		end
+	end
+	local me = UnitIsUnit("target", "player")
+	if not IsSecret(me) and me then maxHealth.target = maxHealth.player end
+end
+
 -- Out-of-combat upkeep (throttled by the caller).
 function Overheal.Refresh()
 	Overheal.UpdateEstimate()
 	for _, unit in ipairs(ns.GroupUnits()) do Overheal.UpdateUnit(unit) end
 	Overheal.UpdateUnit("player")
+	Overheal.UpdateUnit("target")
 end

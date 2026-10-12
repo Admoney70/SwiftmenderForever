@@ -26,6 +26,9 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
     - **Greyed out** (desaturated) when Swiftmend can't be used.
     Each can be turned off in the settings window.
   - Optional border around the icon, with adjustable thickness and colour.
+  - **Overheal glow** (on by default, colour selectable): the icon glows while your target is missing
+    at least the Swiftmend heal, so it won't overheal. It uses the same heal estimate and settings as the
+    raid-frame overheal filter, and works in combat.
   - When your target has no Rejuvenation or Regrowth (or you have no target), the icon shows greyed
     out. Untick "Show greyed icon when target has no HoT" to hide it instead.
 - **Works in combat.** WoW Forever uses the Midnight addon rules, which hide buffs from addons during
@@ -79,6 +82,7 @@ The target icon starts **unlocked**. Drag it where you want it, then right-click
 | `/sm markerborder [1-10]` | Turn the marker icon's border on or off, or set its thickness |
 | `/sm bordersize <1-10>` | Set the raid frame border thickness (default 2) |
 | `/sm icontimer` | Show or hide the HoT time left on the target icon |
+| `/sm glow` | Turn the target icon's overheal glow on or off |
 | `/sm iconborder [1-10]` | Turn the target icon border on or off, or set its thickness |
 | `/sm spiral` / `/sm timer` | Turn the marker's HoT duration spiral or countdown timer on or off |
 | `/sm pattern add\|remove\|list <blizzard\|buzzard> <lua pattern>` | Change which frame names get markers |
@@ -117,7 +121,7 @@ Releases are built by [BigWigsMods/packager](https://github.com/BigWigsMods/pack
 
 - `Core.lua`: settings, out-of-combat aura checks, and the event and refresh loop
 - `Native.lua`: combat-safe HoT sensors built on Blizzard's native aura display
-- `Overheal.lua`: the "won't overheal" marker filter
+- `Overheal.lua`: the "won't overheal" marker filter and target icon glow
 - `Frames.lua`: raid frame markers for Blizzard and Buzzard frames
 - `Icon.lua`: the draggable alert icon
 - `Options.lua`: slash commands

@@ -4,13 +4,16 @@
 -- showing their name and the HoT time left. Behaves like an action button:
 -- a cooldown spiral (and fade) while Swiftmend is on cooldown, a red tint
 -- when the target is out of range, blue when you lack the mana, and
--- desaturated when Swiftmend can't be used.
+-- desaturated when Swiftmend can't be used. Optionally glows while the
+-- target is missing enough health that Swiftmend won't overheal.
 --
 -- In combat the lit icon comes from native aura sensors on "target"
 -- (Native.lua). Those buttons can't be restyled while auras are secret, so
 -- there is one sensor per look (normal / range / mana / unusable), each
 -- styled once, and we switch looks by showing only that sensor's parent
--- frame -- our own frames stay writable in combat.
+-- frame -- our own frames stay writable in combat. The overheal glow is a
+-- fifth sensor that only draws a glow, under a frame of ours whose alpha is
+-- the overheal curve (Overheal.FitsAlpha), which accepts secret health.
 
 local ADDON, ns = ...
 local IsSecret = ns.IsSecret
@@ -36,6 +39,23 @@ local function ApplyPosition()
 	local p = ns.db.icon.point
 	button:ClearAllPoints()
 	button:SetPoint(p[1] or "CENTER", UIParent, p[3] or "CENTER", p[4] or 0, p[5] or 0)
+end
+
+local GLOW_TEXTURE = "Interface\\Buttons\\UI-ActionButton-Border"
+local GLOW_SCALE = 1.75 -- the texture's glow ring sits inside a larger square
+
+local function StyleGlow(tex, cfg)
+	local c = ns.BORDER_COLORS[ns.ColorName(cfg.glowColor)]
+	tex:SetVertexColor(c[1], c[2], c[3])
+	tex:SetSize(cfg.size * GLOW_SCALE, cfg.size * GLOW_SCALE)
+end
+
+local function CreateGlow(parent, layer)
+	local tex = parent:CreateTexture(nil, layer or "OVERLAY")
+	tex:SetTexture(GLOW_TEXTURE)
+	tex:SetBlendMode("ADD")
+	tex:SetPoint("CENTER", button, "CENTER")
+	return tex
 end
 
 local function LabelOffset(cfg)
@@ -163,6 +183,27 @@ local function DecorateTarget(b, state)
 	b.smLabel:SetText(UnitName("target"))
 end
 
+-- The glow sensor's button: no icon, just the glow, shown while the target
+-- has the HoT.
+local function DecorateGlow(b)
+	button.glowNative = b
+	if b.SetMouseClickEnabled then b:SetMouseClickEnabled(false) end
+	if b.SetMouseMotionEnabled then b:SetMouseMotionEnabled(false) end
+	b:ClearAllPoints()
+	b:SetAllPoints(button)
+	if b.ClearDurationText then b:ClearDurationText() end
+	if not b.smGlow then b.smGlow = CreateGlow(b) end
+	StyleGlow(b.smGlow, ns.db.icon)
+end
+
+local function CreateGlowSensor()
+	-- glowGate (overheal alpha) -> glow sensor
+	button.glowGate = CreateFrame("Frame", nil, button)
+	button.glowGate:SetAllPoints(button)
+	button.glowGate:SetFrameLevel(button:GetFrameLevel() + 10)
+	button.glowSensor = ns.Native.CreateSensor(button.glowGate, "target", DecorateGlow)
+end
+
 local function CreateSensors()
 	button.proxies, button.sensors, button.natives = {}, {}, {}
 	for i, state in ipairs(STATES) do
@@ -175,6 +216,7 @@ local function CreateSensors()
 		button.proxies[state], button.sensors[state] = proxy, sensor
 	end
 	button.state = "normal"
+	CreateGlowSensor()
 	return true
 end
 
@@ -201,6 +243,10 @@ local function Create()
 	button.tex:SetAllPoints()
 	button.tex:SetTexture(ns.SpellTexture(ns.SPELLS.SWIFTMEND))
 	button.tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+	-- overheal glow for the out-of-combat fallback (native mode uses a sensor)
+	button.glow = CreateGlow(button)
+	button.glow:Hide()
 
 	-- Swiftmend cooldown spiral, above the native sensors
 	button.cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
@@ -260,12 +306,14 @@ local function StyleNatives()
 	end
 	pendingStyle = nil
 	for state, b in pairs(button.natives) do DecorateTarget(b, state) end
+	if button.glowNative then DecorateGlow(button.glowNative) end
 end
 
 function Icon:Layout()
 	if not button then return end
 	local cfg = ns.db.icon
 	button:SetSize(cfg.size, cfg.size)
+	StyleGlow(button.glow, cfg)
 	if button.sensors then
 		StyleNatives()
 		-- shown/hidden with the greyed base in Refresh
@@ -330,6 +378,19 @@ function Icon:Refresh()
 		for i = 1, 4 do button.edges[i]:SetShown(edgesShown) end
 		button.label:SetText("")
 		button.timer:SetText("")
+		button.glow:Hide()
+		if button.glowGate then
+			-- the sensor only draws while the target has the HoT; the gate
+			-- hides it unless the target is missing at least the heal
+			-- (friendliness can be secret in combat; the HoT implies it)
+			local alpha = 0
+			local exists = UnitExists("target")
+			if cfg.overhealGlow and (IsSecret(exists) or exists) then
+				alpha = ns.Overheal.FitsAlpha("target", 0)
+				if not IsSecret(alpha) and type(alpha) ~= "number" then alpha = 0 end
+			end
+			button.glowGate:SetAlpha(alpha)
+		end
 		if onCD then button:SetAlpha(cfg.cooldownAlpha) else button:SetAlpha(1) end
 		return
 	end
@@ -349,7 +410,9 @@ function Icon:Refresh()
 		button.label:SetText(not IsSecret(name) and name or "")
 		local left = ns.Remaining(aura)
 		button.timer:SetText(cfg.showTimer and left and string.format("%d", left + 0.5) or "")
+		button.glow:SetShown(cfg.overhealGlow and ns.Overheal.Fits("target") == true)
 	else
+		button.glow:Hide()
 		-- greyed when the target has no HoT (or there's no target)
 		if not cfg.locked then
 			button:SetAlpha(0.6)

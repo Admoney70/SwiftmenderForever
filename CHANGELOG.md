@@ -1,5 +1,12 @@
 # Swiftmender Forever
 
+## 1.3.0
+
+- The target icon now glows while Swiftmend won't overheal your target (they're missing at least the
+  heal amount). On by default, with a selectable colour; toggle it in the settings window or with
+  `/sm glow`. It uses the raid filter's heal estimate, fixed-amount and incoming-heal settings, and works
+  in combat.
+
 ## 1.2.0
 
 - New option: only show raid-frame markers when Swiftmend won't overheal (the player is missing at

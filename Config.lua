@@ -18,6 +18,7 @@ local function Changed(what)
 	elseif what == "overheal" then
 		ns.Overheal.UpdateEstimate()
 		ns.Frames:Refresh()
+		ns.Icon:Refresh()
 		Config:Sync()
 	elseif what == "filters" then
 		ns.Native.RefreshFilters()
@@ -249,6 +250,12 @@ local function Build()
 	_, y = Cycle(left, "Border color", y, ns.BORDER_COLOR_NAMES,
 		function() return ns.ColorName(db().icon.borderColor) end,
 		function(v) db().icon.borderColor = v end, "icon")
+	_, y = Check(left, "Glow when Swiftmend won't overheal", y,
+		function() return db().icon.overhealGlow end,
+		function(v) db().icon.overhealGlow = v end, "icon")
+	_, y = Cycle(left, "Glow color", y, ns.BORDER_COLOR_NAMES,
+		function() return ns.ColorName(db().icon.glowColor) end,
+		function(v) db().icon.glowColor = v end, "icon")
 	local resetPos = Button(left, "Reset position", 130)
 	resetPos:SetPoint("TOPLEFT", 26, y)
 	resetPos:SetScript("OnClick", function() ns.Icon:ResetPosition() end)

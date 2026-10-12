@@ -58,6 +58,8 @@ ns.defaults = {
 		showBorder = true,
 		borderSize = 2,
 		borderColor = "Green",
+		overhealGlow = true,   -- glow when Swiftmend won't overheal the target
+		glowColor = "Gold",
 		point = { "CENTER", "UIParent", "CENTER", 0, -150 },
 	},
 }
@@ -346,13 +348,17 @@ events:SetScript("OnEvent", function(self, event, arg1)
 		-- the update payload is secret in combat; only the unit token is used
 		if ValidUnit(arg1) then ns.RefreshUnit(arg1) end
 	elseif event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" then
-		-- only the raid markers' overheal gate depends on health
+		-- only the overheal gate (raid markers, target icon glow) uses health
+		if event == "UNIT_MAXHEALTH" and ValidUnit(arg1) then ns.Overheal.UpdateUnit(arg1) end
 		if ns.db.overlay.noOverheal and ValidUnit(arg1) then
-			if event == "UNIT_MAXHEALTH" then ns.Overheal.UpdateUnit(arg1) end
 			ns.Frames:RefreshUnit(arg1)
+		end
+		if arg1 == "target" and ns.db.icon.overhealGlow then
+			ns.Icon:Refresh()
 		end
 	elseif event == "PLAYER_TARGET_CHANGED" then
 		cache.target = nil
+		ns.Overheal.TargetChanged()
 		Call("TargetChanged")
 		Call("RefreshUnit", "target")
 	elseif event == "SPELL_UPDATE_COOLDOWN" then
