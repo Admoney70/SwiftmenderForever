@@ -1,5 +1,11 @@
 # Swiftmender Forever
 
+## 1.4.0
+
+- Glow styles for the target icon's overheal glow: **Glow** (the static ring, as before), **Proc** (the
+  ability activation glow) or **Pixel** (lines running around the border). Choose one in the settings
+  window or with `/sm glow proc|pixel|glow`. They follow the glow colour and work in combat.
+
 ## 1.3.0
 
 - The target icon now glows while Swiftmend won't overheal your target (they're missing at least the

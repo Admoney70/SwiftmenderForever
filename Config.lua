@@ -253,6 +253,9 @@ local function Build()
 	_, y = Check(left, "Glow when Swiftmend won't overheal", y,
 		function() return db().icon.overhealGlow end,
 		function(v) db().icon.overhealGlow = v end, "icon")
+	_, y = Cycle(left, "Glow style", y, ns.Glow.STYLES,
+		function() return ns.Glow.StyleName(db().icon.glowStyle) end,
+		function(v) db().icon.glowStyle = v end, "icon")
 	_, y = Cycle(left, "Glow color", y, ns.BORDER_COLOR_NAMES,
 		function() return ns.ColorName(db().icon.glowColor) end,
 		function(v) db().icon.glowColor = v end, "icon")

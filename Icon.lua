@@ -41,23 +41,6 @@ local function ApplyPosition()
 	button:SetPoint(p[1] or "CENTER", UIParent, p[3] or "CENTER", p[4] or 0, p[5] or 0)
 end
 
-local GLOW_TEXTURE = "Interface\\Buttons\\UI-ActionButton-Border"
-local GLOW_SCALE = 1.75 -- the texture's glow ring sits inside a larger square
-
-local function StyleGlow(tex, cfg)
-	local c = ns.BORDER_COLORS[ns.ColorName(cfg.glowColor)]
-	tex:SetVertexColor(c[1], c[2], c[3])
-	tex:SetSize(cfg.size * GLOW_SCALE, cfg.size * GLOW_SCALE)
-end
-
-local function CreateGlow(parent, layer)
-	local tex = parent:CreateTexture(nil, layer or "OVERLAY")
-	tex:SetTexture(GLOW_TEXTURE)
-	tex:SetBlendMode("ADD")
-	tex:SetPoint("CENTER", button, "CENTER")
-	return tex
-end
-
 local function LabelOffset(cfg)
 	return -2 - (cfg.showBorder and cfg.borderSize or 0)
 end
@@ -192,8 +175,8 @@ local function DecorateGlow(b)
 	b:ClearAllPoints()
 	b:SetAllPoints(button)
 	if b.ClearDurationText then b:ClearDurationText() end
-	if not b.smGlow then b.smGlow = CreateGlow(b) end
-	StyleGlow(b.smGlow, ns.db.icon)
+	if not b.smGlow then b.smGlow = ns.Glow.Create(b, button) end
+	ns.Glow.Apply(b.smGlow, ns.db.icon)
 end
 
 local function CreateGlowSensor()
@@ -245,8 +228,11 @@ local function Create()
 	button.tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
 	-- overheal glow for the out-of-combat fallback (native mode uses a sensor)
-	button.glow = CreateGlow(button)
-	button.glow:Hide()
+	button.glowHost = CreateFrame("Frame", nil, button)
+	button.glowHost:SetAllPoints()
+	button.glowHost:SetFrameLevel(button:GetFrameLevel() + 10)
+	button.glow = ns.Glow.Create(button.glowHost, button)
+	button.glowHost:Hide()
 
 	-- Swiftmend cooldown spiral, above the native sensors
 	button.cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
@@ -313,7 +299,7 @@ function Icon:Layout()
 	if not button then return end
 	local cfg = ns.db.icon
 	button:SetSize(cfg.size, cfg.size)
-	StyleGlow(button.glow, cfg)
+	ns.Glow.Apply(button.glow, cfg)
 	if button.sensors then
 		StyleNatives()
 		-- shown/hidden with the greyed base in Refresh
@@ -378,7 +364,7 @@ function Icon:Refresh()
 		for i = 1, 4 do button.edges[i]:SetShown(edgesShown) end
 		button.label:SetText("")
 		button.timer:SetText("")
-		button.glow:Hide()
+		button.glowHost:Hide()
 		if button.glowGate then
 			-- the sensor only draws while the target has the HoT; the gate
 			-- hides it unless the target is missing at least the heal
@@ -410,9 +396,9 @@ function Icon:Refresh()
 		button.label:SetText(not IsSecret(name) and name or "")
 		local left = ns.Remaining(aura)
 		button.timer:SetText(cfg.showTimer and left and string.format("%d", left + 0.5) or "")
-		button.glow:SetShown(cfg.overhealGlow and ns.Overheal.Fits("target") == true)
+		button.glowHost:SetShown(cfg.overhealGlow and ns.Overheal.Fits("target") == true)
 	else
-		button.glow:Hide()
+		button.glowHost:Hide()
 		-- greyed when the target has no HoT (or there's no target)
 		if not cfg.locked then
 			button:SetAlpha(0.6)

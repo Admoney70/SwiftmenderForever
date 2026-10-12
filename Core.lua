@@ -60,6 +60,7 @@ ns.defaults = {
 		borderColor = "Green",
 		overhealGlow = true,   -- glow when Swiftmend won't overheal the target
 		glowColor = "Gold",
+		glowStyle = "Glow",    -- Glow, Proc (ability activation) or Pixel
 		point = { "CENTER", "UIParent", "CENTER", 0, -150 },
 	},
 }

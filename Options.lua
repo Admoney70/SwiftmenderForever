@@ -29,7 +29,7 @@ local function Help()
 	print("  /sm overheal [amount|auto] - toggle 'only show when it won't overheal', or set the heal amount")
 	print("  /sm iconborder [1-10]  - toggle the target icon border, or set its thickness")
 	print("  /sm icontimer          - toggle the HoT time-left number on the target icon")
-	print("  /sm glow               - toggle the target icon glow when Swiftmend won't overheal")
+	print("  /sm glow [glow|proc|pixel] - toggle the target icon's overheal glow, or set its style")
 	print("  /sm pattern add|remove|list <blizzard|buzzard> <lua pattern>")
 	print("  /sm frames             - list unit frames that aren't hooked yet")
 	print("  /sm scan               - rescan for raid frames")
@@ -181,12 +181,17 @@ local function Handler(msg)
 		ns.Icon:Layout()
 		ns.Print("target icon HoT timer " .. OnOff(db.icon.showTimer))
 	elseif cmd == "glow" then
-		db.icon.overhealGlow = not db.icon.overhealGlow
+		local style = rest ~= "" and ns.Glow.StyleName(rest:sub(1, 1):upper() .. rest:sub(2):lower())
+		if style and style:lower() == rest:lower() then
+			db.icon.glowStyle, db.icon.overhealGlow = style, true
+		else
+			db.icon.overhealGlow = not db.icon.overhealGlow
+		end
 		ns.Overheal.UpdateEstimate()
 		ns.Icon:Layout()
 		local heal = ns.Overheal.HealAmount()
 		ns.Print("target icon overheal glow " .. OnOff(db.icon.overhealGlow)
-			.. " (heal " .. (heal and tostring(heal) or "unknown") .. ")")
+			.. " (" .. ns.Glow.StyleName(db.icon.glowStyle) .. ", heal " .. (heal and tostring(heal) or "unknown") .. ")")
 	elseif cmd == "iconborder" then
 		if tonumber(rest) then
 			db.icon.borderSize = math.max(1, math.min(10, math.floor(tonumber(rest))))
