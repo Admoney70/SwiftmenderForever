@@ -365,6 +365,9 @@ events:SetScript("OnEvent", function(self, event, arg1)
 		Call("RefreshUnit", "target")
 	elseif event == "SPELL_UPDATE_COOLDOWN" then
 		Call("UpdateCooldown")
+	elseif event == "SPELLS_CHANGED" then
+		-- fires on every shapeshift; the raid frames don't change, so no scan
+		ns.RefreshAll()
 	else
 		-- roster/zone/combat changes: look for new raid frames, then redraw
 		Call("Scan", event)

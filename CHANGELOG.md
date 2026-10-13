@@ -1,5 +1,10 @@
 # Swiftmender Forever
 
+## 1.6.2
+
+- Shapeshifting (feral forms) no longer rescans the raid frames. The form change fired the game's
+  "spells changed" event, which started a full scan each time; it now just refreshes.
+
 ## 1.6.1
 
 - Fixed "script ran too long" errors from the raid-frame scan. The scan (and `/sm frames`) now looks
