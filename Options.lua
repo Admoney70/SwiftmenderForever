@@ -33,6 +33,7 @@ local function Help()
 	print("  /sm glow [glow|proc|pixel] - toggle the target icon's overheal glow, or set its style")
 	print("  /sm pattern add|remove|list <blizzard|buzzard> <lua pattern>")
 	print("  /sm frames             - list unit frames that aren't hooked yet")
+	print("  /sm health [unit]      - show the health values the overheal check can see (default target)")
 	print("  /sm scan               - rescan for raid frames")
 	print("  /sm legacy             - toggle the old out-of-combat-only tracking (reloads)")
 	print("  /sm status | reset")
@@ -212,6 +213,9 @@ local function Handler(msg)
 		ns.Print("raid frame border " .. OnOff(db.overlay.showBorder))
 	elseif cmd == "pattern" then
 		Pattern(rest)
+	elseif cmd == "health" then
+		ns.Overheal.UpdateEstimate()
+		ns.Overheal.Report(rest ~= "" and rest:lower() or "target")
 	elseif cmd == "frames" then
 		ns.Print("unit frames without a Swiftmender marker:")
 		ns.Frames:ListUnmatched()

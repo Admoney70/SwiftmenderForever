@@ -196,11 +196,10 @@ local function CreateSet(unit)
 		proxy:SetShown(state == "normal")
 		set.proxies[state], set.sensors[state] = proxy, sensor
 	end
-	-- glowGate (overheal alpha) -> glow sensor
-	set.glowGate = CreateFrame("Frame", nil, set.root)
-	set.glowGate:SetAllPoints(button)
-	set.glowGate:SetFrameLevel(button:GetFrameLevel() + 10)
-	set.glowSensor = ns.Native.CreateSensor(set.glowGate, unit, function(b) DecorateGlow(b, set) end)
+	-- overheal gate -> glow sensor (the margin leaves room for the glow)
+	set.glowGate = ns.Overheal.CreateGate(set.root, 200)
+	set.glowGate.clip:SetFrameLevel(button:GetFrameLevel() + 10)
+	set.glowSensor = ns.Native.CreateSensor(set.glowGate.clip, unit, function(b) DecorateGlow(b, set) end)
 	set.state = "normal"
 	return set
 end
@@ -410,13 +409,12 @@ function Icon:Refresh()
 			-- the sensor only draws while the unit has the HoT; the gate
 			-- hides it unless the unit is missing at least the heal
 			-- (friendliness can be secret in combat; the HoT implies it)
-			local alpha = 0
 			local exists = UnitExists(unit)
 			if cfg.overhealGlow and (IsSecret(exists) or exists) then
-				alpha = ns.Overheal.FitsAlpha(unit, 0)
-				if not IsSecret(alpha) and type(alpha) ~= "number" then alpha = 0 end
+				ns.Overheal.UpdateGate(set.glowGate, unit, true, 0)
+			else
+				set.glowGate.clip:SetAlpha(0)
 			end
-			set.glowGate:SetAlpha(alpha)
 		end
 		if onCD then button:SetAlpha(cfg.cooldownAlpha) else button:SetAlpha(1) end
 		return

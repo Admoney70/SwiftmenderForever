@@ -12,8 +12,8 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
   - Markers and borders fade while Swiftmend is on cooldown (optional, adjustable opacity).
   - Optional overheal filter: only show a marker when the player is missing at least as much health as
     Swiftmend would heal. The heal is estimated from your Rejuvenation tooltip (scale it, or set a fixed
-    amount) and can count incoming heals. It works in combat by turning the heal into a health-percent
-    threshold per player, using max health remembered from out of combat.
+    amount) and can count incoming heals. Off by default. It reads the game's missing health
+    (`UnitHealthMissing`), so it works in combat and in instances.
   - Blizzard raid and party frames (`CompactRaidFrame…`, `CompactPartyFrame…`, `CompactRaidGroup…`)
   - [Buzzard Frames](https://www.curseforge.com/wow/addons/buzzard-frames) (frames named `Buzzard…` / `BF_…`)
 - **Draggable alert icon:** tracks your **target**. It lights up when your friendly target
@@ -84,6 +84,7 @@ The target icon starts **unlocked**. Drag it where you want it, then right-click
 | `/sm markerborder [1-10]` | Turn the marker icon's border on or off, or set its thickness |
 | `/sm bordersize <1-10>` | Set the raid frame border thickness (default 2) |
 | `/sm icontimer` | Show or hide the HoT time left on the target icon |
+| `/sm health [unit]` | Show the health values the overheal check can see (default: your target) |
 | `/sm self` | Turn on or off following yourself when you have no friendly target |
 | `/sm glow [glow\|proc\|pixel]` | Turn the target icon's overheal glow on or off, or set its style |
 | `/sm iconborder [1-10]` | Turn the target icon border on or off, or set its thickness |

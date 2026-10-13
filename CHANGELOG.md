@@ -1,5 +1,14 @@
 # Swiftmender Forever
 
+## 1.6.0
+
+- The overheal check (raid-frame filter and target icon glow) now uses the game's **missing health**
+  (`UnitHealthMissing`, what Blizzard raid frames show as "Health Missing"). It no longer needs each
+  player's max health from out of combat, so it works for everyone, in combat and in instances. The old
+  health-percent method is kept as a fallback.
+- New `/sm health [unit]` prints the health values the addon can see for a unit (default: target), the
+  heal amount it uses and whether Swiftmend would fit right now.
+
 ## 1.5.1
 
 - Fixed a Lua error ("calling 'GetName' on bad self ... forbidden object") when the raid-frame scan

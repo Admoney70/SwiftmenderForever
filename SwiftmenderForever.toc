@@ -2,7 +2,7 @@
 ## Title: Swiftmender Forever
 ## Notes: Shows who can be Swiftmended (has Rejuvenation or Regrowth) on Blizzard and Buzzard raid frames, plus a draggable target icon. Works in combat.
 ## Author: admoney70
-## Version: 1.5.1
+## Version: 1.6.0
 ## X-Curse-Project-ID: 1739421
 ## SavedVariables: SwiftmenderForeverDB
 ## IconTexture: Interface\Icons\INV_Relics_IdolofRejuvenation
