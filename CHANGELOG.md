@@ -1,5 +1,10 @@
 # Swiftmender Forever
 
+## 1.6.1
+
+- Fixed "script ran too long" errors from the raid-frame scan. The scan (and `/sm frames`) now looks
+  through the game's frames a batch at a time instead of all at once.
+
 ## 1.6.0
 
 - The overheal check (raid-frame filter and target icon glow) now uses the game's **missing health**

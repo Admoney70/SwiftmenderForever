@@ -333,38 +333,68 @@ local function Consider(frame, provider, depth)
 	end
 end
 
+-- The game has thousands of frames (each aura display adds more), and one
+-- pass over all of them can hit the "script ran too long" limit, so walks
+-- look at a batch per frame and pick up where they left off.
+local SCAN_BATCH = 250
+
+local function WalkFrames(visit, done)
+	local frame = EnumerateFrames()
+	local function step()
+		local n = 0
+		while frame and n < SCAN_BATCH do
+			if Usable(frame) then visit(frame) end
+			frame = EnumerateFrames(frame)
+			n = n + 1
+		end
+		if frame then
+			C_Timer.After(0, step)
+		elseif done then
+			done()
+		end
+	end
+	step()
+end
+
+local scanning, scanAgain
 function Frames:ScanNow()
 	if not ns.db then return end
-	local frame = EnumerateFrames()
-	while frame do
-		if Usable(frame) then
-			local provider = ProviderFor(SafeName(frame))
-			if provider then Consider(frame, provider, 3) end
-		end
-		frame = EnumerateFrames(frame)
+	if scanning then
+		scanAgain = true
+		return
 	end
+	scanning = true
+	WalkFrames(function(frame)
+		local provider = ProviderFor(SafeName(frame))
+		if provider then Consider(frame, provider, 3) end
+	end, function()
+		scanning = nil
+		if scanAgain then
+			scanAgain = nil
+			Frames:ScanNow()
+		else
+			Frames:Refresh()
+		end
+	end)
 end
 
 -- Debug helper: list named frames with a group unit that we did NOT match,
 -- so users can find out what a raid-frame addon calls its frames.
 function Frames:ListUnmatched()
 	local seen, n = {}, 0
-	local frame = EnumerateFrames()
-	while frame do
-		if Usable(frame) then
-			local name = SafeName(frame)
-			if name and not overlays[frame] and FrameUnit(frame) then
-				local prefix = name:match("^(%a+)") or name
-				if not seen[prefix] then
-					seen[prefix] = true
-					n = n + 1
-					ns.Print(string.format("  %s (unit %s)", name, FrameUnit(frame)))
-				end
+	WalkFrames(function(frame)
+		local name = SafeName(frame)
+		if name and not overlays[frame] and FrameUnit(frame) then
+			local prefix = name:match("^(%a+)") or name
+			if not seen[prefix] then
+				seen[prefix] = true
+				n = n + 1
+				ns.Print(string.format("  %s (unit %s)", name, FrameUnit(frame)))
 			end
 		end
-		frame = EnumerateFrames(frame)
-	end
-	if n == 0 then ns.Print("  no unmatched unit frames found") end
+	end, function()
+		if n == 0 then ns.Print("  no unmatched unit frames found") end
+	end)
 end
 
 function Frames:Count()
