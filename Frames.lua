@@ -14,7 +14,32 @@ ns.Frames = Frames
 local overlays = {}   -- [unitFrame] = overlay
 local providers = { "blizzard", "buzzard" }
 
-local function FrameUnit(frame)
+-- Some frames (protected ones, or ones restricted by the secret-value
+-- rules) error on any method call from addon code even though they don't
+-- report IsForbidden, so every read of a frame we don't own is guarded.
+local function Usable(frame)
+	if type(frame) ~= "table" then return false end
+	if frame.IsForbidden then
+		local ok, forbidden = pcall(frame.IsForbidden, frame)
+		if not ok or forbidden then return false end
+	end
+	return true
+end
+
+local function SafeName(frame)
+	if not frame.GetName then return end
+	local ok, name = pcall(frame.GetName, frame)
+	if ok and not IsSecret(name) then return name end
+end
+
+local function SafeChildren(frame)
+	if not frame.GetChildren then return {} end
+	local result = { pcall(frame.GetChildren, frame) }
+	if not table.remove(result, 1) then return {} end
+	return result
+end
+
+local function ReadUnit(frame)
 	local unit = frame.displayedUnit
 	if IsSecret(unit) then return end
 	if unit == nil then unit = frame.unit end
@@ -28,6 +53,11 @@ local function FrameUnit(frame)
 	if unit == "player" or unit:match("^party%d+$") or unit:match("^raid%d+$") then
 		return unit
 	end
+end
+
+local function FrameUnit(frame)
+	local ok, unit = pcall(ReadUnit, frame)
+	if ok then return unit end
 end
 
 local function ProviderFor(name)
@@ -207,8 +237,7 @@ function Frames:SetPreview(on)
 end
 
 function Frames:Attach(frame, provider)
-	if not frame or overlays[frame] then return end
-	if frame.IsForbidden and frame:IsForbidden() then return end
+	if not frame or overlays[frame] or not Usable(frame) then return end
 	local o = CreateOverlay(frame, provider)
 	if o then
 		overlays[frame] = o
@@ -294,12 +323,12 @@ end
 -- Walk a named frame and (for group headers) its unnamed children looking
 -- for unit buttons.
 local function Consider(frame, provider, depth)
-	if not frame or frame.smOverlay or (frame.IsForbidden and frame:IsForbidden()) then return end
+	if not Usable(frame) or frame.smOverlay then return end
 	if FrameUnit(frame) then
 		Frames:Attach(frame, provider)
 	end
-	if depth > 0 and frame.GetChildren then
-		for _, child in ipairs({ frame:GetChildren() }) do
+	if depth > 0 then
+		for _, child in ipairs(SafeChildren(frame)) do
 			Consider(child, provider, depth - 1)
 		end
 	end
@@ -309,8 +338,8 @@ function Frames:ScanNow()
 	if not ns.db then return end
 	local frame = EnumerateFrames()
 	while frame do
-		if not (frame.IsForbidden and frame:IsForbidden()) then
-			local provider = ProviderFor(frame:GetName())
+		if Usable(frame) then
+			local provider = ProviderFor(SafeName(frame))
 			if provider then Consider(frame, provider, 3) end
 		end
 		frame = EnumerateFrames(frame)
@@ -323,9 +352,9 @@ function Frames:ListUnmatched()
 	local seen, n = {}, 0
 	local frame = EnumerateFrames()
 	while frame do
-		if not (frame.IsForbidden and frame:IsForbidden()) then
-			local name = frame:GetName()
-			if name and not IsSecret(name) and not overlays[frame] and FrameUnit(frame) then
+		if Usable(frame) then
+			local name = SafeName(frame)
+			if name and not overlays[frame] and FrameUnit(frame) then
 				local prefix = name:match("^(%a+)") or name
 				if not seen[prefix] then
 					seen[prefix] = true
@@ -374,8 +403,8 @@ function Frames:Init()
 		hooksecurefunc("CompactUnitFrame_SetUnit", function(frame, unit)
 			if overlays[frame] then
 				Frames:UpdateFrame(frame)
-			elseif FrameUnit(frame) then
-				local provider = ProviderFor(frame:GetName())
+			elseif Usable(frame) and FrameUnit(frame) then
+				local provider = ProviderFor(SafeName(frame))
 				if provider == "blizzard" then Frames:Attach(frame, provider) end
 			end
 		end)

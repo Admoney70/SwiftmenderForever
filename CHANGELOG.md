@@ -1,5 +1,10 @@
 # Swiftmender Forever
 
+## 1.5.1
+
+- Fixed a Lua error ("calling 'GetName' on bad self ... forbidden object") when the raid-frame scan
+  reached a protected frame. Frames the game won't let addons read are now skipped.
+
 ## 1.5.0
 
 - With no target or an enemy target, the target icon now tracks you: your HoTs, your name, and the
