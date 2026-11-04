@@ -1,5 +1,11 @@
 # Swiftmender Forever
 
+## 1.7.0
+
+- Only your own Rejuvenation and Regrowth count now, on the raid frames and the target icon. This is the
+  new default and existing settings are switched over once. To count other druids' HoTs again, untick
+  "Only count my own Rejuvenation / Regrowth" in `/sm` or type `/sm mine`.
+
 ## 1.6.2
 
 - Shapeshifting (feral forms) no longer rescans the raid frames. The form change fired the game's

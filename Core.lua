@@ -13,7 +13,7 @@ ns.SPELLS = {
 ns.FALLBACK_ICON = "Interface\\Icons\\INV_Relics_IdolofRejuvenation"
 
 ns.defaults = {
-	onlyMine = false,        -- only count HoTs cast by you
+	onlyMine = true,         -- only count HoTs cast by you
 	updateInterval = 0.25,   -- seconds between full refreshes
 	forceLegacy = false,     -- skip the native (combat-safe) aura sensors
 	overlay = {
@@ -96,6 +96,7 @@ end
 
 function ns.ResetDB()
 	wipe(SwiftmenderForeverDB)
+	SwiftmenderForeverDB.mineByDefault = true
 	CopyDefaults(ns.defaults, SwiftmenderForeverDB)
 	ns.db = SwiftmenderForeverDB
 end
@@ -330,6 +331,11 @@ events:SetScript("OnEvent", function(self, event, arg1)
 		if arg1 ~= ADDON then return end
 		self:UnregisterEvent("ADDON_LOADED")
 		SwiftmenderForeverDB = SwiftmenderForeverDB or {}
+		-- 1.7.0 made "only my HoTs" the default: switch older saves over once
+		if not SwiftmenderForeverDB.mineByDefault then
+			SwiftmenderForeverDB.onlyMine = true
+			SwiftmenderForeverDB.mineByDefault = true
+		end
 		CopyDefaults(ns.defaults, SwiftmenderForeverDB)
 		ns.db = SwiftmenderForeverDB
 		ns.Native.Load()

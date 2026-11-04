@@ -57,7 +57,7 @@ Type **`/sm`** (or `/swiftmender`) to open the settings window. You can also rea
 Esc > Options > AddOns > Swiftmender Forever. The window covers the target icon (show, lock, size,
 cooldown spiral and fade, range/mana/usable colouring, border thickness and colour, reset position), the raid frame markers (Blizzard and Buzzard on/off, marker icon,
 HoT spiral, countdown timer, marker border and frame border with thickness and colour, size,
-anchor, X/Y offset with -/+ nudge buttons) and whether to count only your own HoTs.
+anchor, X/Y offset with -/+ nudge buttons) and whether to count only your own HoTs (the default).
 
 While the window is open, every raid frame shows a preview marker, so you can see where the marker
 lands as you change its size, anchor and offsets, even when nobody has a HoT.
@@ -73,7 +73,7 @@ The target icon starts **unlocked**. Drag it where you want it, then right-click
 | `/sm icon` | Turn the target icon on or off |
 | `/sm iconsize <n>` | Set the target icon size (default 48) |
 | `/sm fade <0-1>` | Set how faded the icon is while Swiftmend is on cooldown (default 0.35) |
-| `/sm mine` | Only count Rejuvenation and Regrowth that you cast |
+| `/sm mine` | Toggle counting only the Rejuvenation and Regrowth you cast (on by default) or everyone's |
 | `/sm blizzard` / `/sm buzzard` | Turn markers on or off for each raid frame addon |
 | `/sm size <n>` | Set the raid frame marker size (default 14) |
 | `/sm anchor <point> [x y]` | Move the marker, e.g. `/sm anchor TOPRIGHT -2 -2` |
