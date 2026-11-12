@@ -1,7 +1,8 @@
 -- Swiftmender Forever: draggable target icon.
 -- Shows greyed out, and lights up when your target (including yourself)
 -- can be Swiftmended; with no friendly target it follows you instead,
--- showing their name and the HoT time left. Behaves like an action button:
+-- showing the HoT time left (and optionally the name). Behaves like an
+-- action button:
 -- a cooldown spiral (and fade) while Swiftmend is on cooldown, a red tint
 -- when the target is out of range, blue when you lack the mana, and
 -- desaturated when Swiftmend can't be used. Optionally glows while the
@@ -157,6 +158,7 @@ local function DecorateTarget(b, set, state)
 	local cfg = ns.db.icon
 	ns.LayoutEdges(b.smEdges, b, cfg.borderSize, cfg.borderColor, cfg.showBorder, true)
 	b.smLabel:SetPoint("TOP", b, "BOTTOM", 0, LabelOffset(cfg))
+	b.smLabel:SetShown(cfg.showName and true or false)
 	if cfg.showTimer then
 		b.smTimer:Show()
 		b:SetDurationText(b.smTimer, ns.Native.TimerOptions())
@@ -327,6 +329,7 @@ function Icon:Layout()
 		ns.LayoutEdges(button.edges, button, cfg.borderSize, cfg.borderColor, cfg.showBorder, true)
 	end
 	button.label:SetPoint("TOP", button, "BOTTOM", 0, LabelOffset(cfg))
+	button.label:SetShown(cfg.showName and true or false)
 	button:EnableMouse(not cfg.locked)
 	button.hint:SetShown(not cfg.locked)
 	ApplyPosition()

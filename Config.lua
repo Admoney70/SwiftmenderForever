@@ -232,6 +232,9 @@ local function Build()
 	_, y = Check(left, "Show HoT time left on the icon", y,
 		function() return db().icon.showTimer end,
 		function(v) db().icon.showTimer = v end, "icon")
+	_, y = Check(left, "Show name under the icon", y,
+		function() return db().icon.showName end,
+		function(v) db().icon.showName = v end, "icon")
 	_, y = Check(left, "Cooldown spiral while Swiftmend is on cooldown", y,
 		function() return db().icon.showCooldown end,
 		function(v) db().icon.showCooldown = v end, "icon")

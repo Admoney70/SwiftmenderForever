@@ -52,6 +52,7 @@ ns.defaults = {
 		cooldownAlpha = 0.35,  -- alpha when they can but Swiftmend is on cooldown
 		showCooldown = true,   -- Swiftmend cooldown spiral
 		showTimer = true,      -- HoT time-left number on the icon
+		showName = false,      -- unit name under the icon
 		tintRange = true,      -- red when the target is out of range
 		tintMana = true,       -- blue when you lack the mana
 		desatUnusable = true,  -- grey when Swiftmend can't be used

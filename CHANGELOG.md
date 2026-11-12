@@ -1,5 +1,10 @@
 # Swiftmender Forever
 
+## 1.8.0
+
+- The name under the target icon is now hidden. Turn it back on with "Show name under the icon" in `/sm`,
+  or `/sm name`.
+
 ## 1.7.0
 
 - Only your own Rejuvenation and Regrowth count now, on the raid frames and the target icon. This is the
