@@ -27,6 +27,7 @@ local function Help()
 	print("  /sm bordersize <1-10>  - raid-frame border thickness")
 	print("  /sm markerborder [1-10] - toggle the marker icon border, or set its thickness")
 	print("  /sm markerfade [0-1]   - toggle fading markers on Swiftmend cooldown, or set the opacity")
+	print("  /sm cdtimer [off|over|only] - Swiftmend cooldown timer on the markers")
 	print("  /sm overheal [amount|auto] - toggle 'only show when it won't overheal', or set the heal amount")
 	print("  /sm iconborder [1-10]  - toggle the target icon border, or set its thickness")
 	print("  /sm icontimer          - toggle the HoT time-left number on the target icon")
@@ -165,6 +166,18 @@ local function Handler(msg)
 		local heal = ns.Overheal.HealAmount()
 		ns.Print("only show markers when it won't overheal: " .. OnOff(db.overlay.noOverheal)
 			.. " (heal " .. (heal and tostring(heal) or "unknown") .. ")")
+	elseif cmd == "cdtimer" then
+		local map = { off = "Off", over = "Over icon", only = "Timer only" }
+		local modes, cur = ns.Frames.TIMER_MODES, ns.Frames.TimerMode()
+		local nextMode = map[rest:lower()]
+		if not nextMode then
+			for i, m in ipairs(modes) do
+				if m == cur then nextMode = modes[i % #modes + 1] end
+			end
+		end
+		db.overlay.cooldownTimer = nextMode
+		ns.Frames:Relayout()
+		ns.Print("marker cooldown timer: " .. nextMode)
 	elseif cmd == "markerfade" then
 		if tonumber(rest) then
 			db.overlay.cooldownAlpha = math.max(0, math.min(1, tonumber(rest)))

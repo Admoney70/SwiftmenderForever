@@ -34,6 +34,7 @@ ns.defaults = {
 		overhealAmount = 0,     -- fixed heal amount instead of the estimate (0 = auto)
 		overhealPredicted = true, -- count incoming heals as already landed
 		fadeOnCooldown = true,  -- fade markers while Swiftmend is on cooldown
+		cooldownTimer = "Off",  -- Swiftmend cooldown timer: Off, Over icon, Timer only
 		cooldownAlpha = 0.35,
 		showIconBorder = true,  -- border around the marker icon
 		iconBorderSize = 1,

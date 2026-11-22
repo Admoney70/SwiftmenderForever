@@ -1,5 +1,15 @@
 # Swiftmender Forever
 
+## 1.9.0
+
+- New "Cooldown timer" option for the raid-frame markers while Swiftmend is on cooldown:
+  - **Over icon:** the icon with a dark cooldown sweep and the seconds left on it.
+  - **Timer only:** just the seconds left, in place of the marker.
+  - **Off** (default): as before.
+  It only shows on players with your HoT, and works in combat. Set it in `/sm` (Raid frames) or with
+  `/sm cdtimer off|over|only`. With a timer on, the fade-on-cooldown option no longer dims the timer.
+- The settings window shrinks to fit short screens.
+
 ## 1.8.0
 
 - The name under the target icon is now hidden. Turn it back on with "Show name under the icon" in `/sm`,

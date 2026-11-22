@@ -165,7 +165,10 @@ local function CreateOverlay(frame, provider)
 		-- the overheal gate sits between our overlay (cooldown fade) and the
 		-- native sensor (see Overheal.CreateGate)
 		o.gate = ns.Overheal.CreateGate(o, 40)
-		o.sensor = ns.Native.CreateSensor(o.gate.clip, o.smUnit, function(button) DecorateNative(o, button) end)
+		-- the normal marker look, hidden while a cooldown timer replaces it
+		o.look = CreateFrame("Frame", nil, o.gate.clip)
+		o.look:SetAllPoints(o)
+		o.sensor = ns.Native.CreateSensor(o.look, o.smUnit, function(button) DecorateNative(o, button) end)
 		if o.sensor then return o end
 	end
 
@@ -192,6 +195,164 @@ local function CreateOverlay(frame, provider)
 	LayoutOverlay(o)
 	o:Hide()
 	return o
+end
+
+--------------------------------------------------------------------------
+-- Swiftmend cooldown timer on the markers
+--------------------------------------------------------------------------
+-- While Swiftmend is on cooldown the marker can show the time left, over
+-- the icon ("Over icon": icon, dark sweep and number) or instead of it
+-- ("Timer only"). These are frames of ours, so they can change in combat.
+-- In native mode they must still only show on players with the HoT, and the
+-- native button can't be restyled in combat, so a second sensor drives an
+-- invisible duration bar inside its button: a very wide StatusBar whose fill
+-- is the whole area while the HoT runs and nothing once it's gone. Our
+-- clipping frame is anchored to that fill, so the timer inside it appears
+-- and disappears with the HoT, without reading any aura data.
+
+local TIMER_MODES = { "Off", "Over icon", "Timer only" }
+Frames.TIMER_MODES = TIMER_MODES
+local BAR_WIDTH = 100000
+local BAR_MARGIN = 40
+local BAR_TEXTURE = "Interface\\Buttons\\WHITE8X8"
+
+function Frames.TimerMode()
+	local mode = ns.db.overlay.cooldownTimer
+	for _, m in ipairs(TIMER_MODES) do
+		if m == mode then return m end
+	end
+	return "Off"
+end
+
+local barOptions
+local function BarOptions()
+	if barOptions == nil then
+		barOptions = false
+		local dirs = Enum and Enum.StatusBarTimerDirection
+		if type(dirs) == "table" then
+			for key, value in pairs(dirs) do
+				if tostring(key):find("Remaining") then barOptions = { direction = value } end
+			end
+		end
+	end
+	return barOptions or nil
+end
+
+-- The bar sensor's button: nothing visible, just the duration bar.
+local function DecorateBar(o, button)
+	if button.SetMouseClickEnabled then button:SetMouseClickEnabled(false) end
+	if button.SetMouseMotionEnabled then button:SetMouseMotionEnabled(false) end
+	button:ClearAllPoints()
+	button:SetPoint("TOPLEFT", o, "TOPLEFT")
+	button:SetSize(1, 1)
+	if not button.SetDurationBar then
+		o.timerUnavailable = true
+		return
+	end
+	if not button.smBar then
+		local bar = CreateFrame("StatusBar", nil, button)
+		bar:SetStatusBarTexture(BAR_TEXTURE)
+		bar:SetStatusBarColor(0, 0, 0, 0)
+		button.smBar = bar
+	end
+	local bar = button.smBar
+	bar:ClearAllPoints()
+	bar:SetPoint("TOPLEFT", o, "TOPLEFT", -BAR_MARGIN, BAR_MARGIN)
+	bar:SetPoint("BOTTOMLEFT", o, "BOTTOMLEFT", -BAR_MARGIN, -BAR_MARGIN)
+	bar:SetWidth(BAR_WIDTH)
+	button:SetDurationBar(bar, BarOptions())
+	local fill = bar:GetStatusBarTexture()
+	o.hotGate:ClearAllPoints()
+	o.hotGate:SetPoint("TOPLEFT", fill, "TOPLEFT")
+	o.hotGate:SetPoint("BOTTOMRIGHT", fill, "BOTTOMRIGHT")
+end
+
+local function LayoutTimer(o)
+	local cfg, L = ns.db.overlay, o.timerLayer
+	local over = Frames.TimerMode() == "Over icon"
+	L.marker:ClearAllPoints()
+	L.marker:SetSize(cfg.size, cfg.size)
+	L.marker:SetPoint(cfg.point, o, cfg.point, cfg.offsetX, cfg.offsetY)
+	L.icon:SetShown(over and cfg.showIcon)
+	L.swipe:SetShown(over)
+	local font = L.text:GetFont() or STANDARD_TEXT_FONT
+	if font then L.text:SetFont(font, math.max(8, math.floor(cfg.size * 0.7 + 0.5)), "OUTLINE") end
+	ns.LayoutEdges(L.edges, o, cfg.borderSize, cfg.borderColor, over and cfg.showBorder)
+	ns.LayoutEdges(L.iconEdges, L.marker, cfg.iconBorderSize, cfg.iconBorderColor,
+		over and cfg.showIcon and cfg.showIconBorder, true)
+end
+
+-- Builds the timer layer the first time a timer mode is used.
+local function EnsureTimer(o)
+	if o.timerLayer then return end
+	local parent = o
+	if o.sensor then
+		o.hotGate = CreateFrame("Frame", nil, o.gate.clip)
+		o.hotGate:SetClipsChildren(true)
+		o.hotGate:SetFrameLevel(o.look:GetFrameLevel() + 15)
+		-- collapsed (nothing shows) until the bar sensor anchors it
+		o.hotGate:SetPoint("TOPLEFT", o, "TOPLEFT")
+		o.hotGate:SetSize(0, 0)
+		o.barHost = CreateFrame("Frame", nil, o.gate.clip)
+		o.barHost:SetAllPoints(o)
+		o.barSensor = ns.Native.CreateSensor(o.barHost, o.smUnit, function(button) DecorateBar(o, button) end)
+		parent = o.hotGate
+	end
+	local L = CreateFrame("Frame", nil, parent)
+	L:SetAllPoints(o)
+	L:SetFrameLevel(parent:GetFrameLevel() + 1)
+	L.marker = CreateFrame("Frame", nil, L)
+	L.icon = L:CreateTexture(nil, "ARTWORK")
+	L.icon:SetAllPoints(L.marker)
+	L.icon:SetTexture(ns.SpellTexture(ns.SPELLS.SWIFTMEND))
+	L.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+	L.swipe = CreateFrame("Cooldown", nil, L, "CooldownFrameTemplate")
+	L.swipe:SetAllPoints(L.marker)
+	L.swipe:SetDrawEdge(false)
+	L.swipe:SetDrawBling(false)
+	L.swipe:SetHideCountdownNumbers(true)
+	local textHost = CreateFrame("Frame", nil, L)
+	textHost:SetAllPoints(L)
+	textHost:SetFrameLevel(L.swipe:GetFrameLevel() + 2)
+	L.text = textHost:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+	L.text:SetPoint("CENTER", L.marker, "CENTER", 0, 0)
+	L.edges = ns.CreateEdges(L)
+	L.iconEdges = ns.CreateEdges(textHost, 5)
+	L:Hide()
+	o.timerLayer = L
+	LayoutTimer(o)
+	ns.Icon.ApplySwiftmendCooldown(L.swipe)
+end
+
+-- Countdown text, updated a few times a second while any timer shows.
+local shownTimers = {}
+local ticker = CreateFrame("Frame")
+ticker.elapsed = 0
+local function TimerText()
+	local left = ns.Icon.SwiftmendRemaining()
+	if not left then return "" end
+	if left < 1 then return string.format("%.1f", left) end
+	return string.format("%d", math.ceil(left))
+end
+ticker:SetScript("OnUpdate", function(self, elapsed)
+	self.elapsed = self.elapsed + elapsed
+	if self.elapsed < 0.1 then return end
+	self.elapsed = 0
+	if not next(shownTimers) then return end
+	local text = TimerText()
+	for L in pairs(shownTimers) do L.text:SetText(text) end
+end)
+
+-- Legacy overlays draw the normal look straight on the overlay.
+local function SetLegacyLook(o, shown)
+	local cfg = ns.db.overlay
+	o.icon:SetShown(shown and cfg.showIcon)
+	o.timer:SetShown(shown and cfg.showIcon and cfg.showTimer)
+	if not shown then o.spiral:Hide() end
+	for i = 1, 4 do
+		o.edges[i]:SetShown(shown and cfg.showBorder and true or false)
+		o.iconEdges[i]:SetShown(shown and cfg.showIcon and cfg.showIconBorder and true or false)
+	end
 end
 
 -- Placement preview: while the settings window is open every hooked raid
@@ -282,15 +443,40 @@ local onCooldown = false
 
 -- Our overlay frame is addon-owned, so its alpha can change in combat and
 -- fades the native marker and borders inside it.
+-- (In native mode only the normal look fades, not the cooldown timer.)
 local function ApplyFade(o)
 	local cfg = ns.db.overlay
-	if cfg.fadeOnCooldown and onCooldown then o:SetAlpha(cfg.cooldownAlpha) else o:SetAlpha(1) end
+	local target = o.look or o
+	if cfg.fadeOnCooldown and onCooldown then target:SetAlpha(cfg.cooldownAlpha) else target:SetAlpha(1) end
+end
+
+-- Swaps between the normal look and the cooldown timer.
+local function ApplyTimer(o)
+	local mode = Frames.TimerMode()
+	if mode ~= "Off" then EnsureTimer(o) end
+	local active = mode ~= "Off" and onCooldown and not o.timerUnavailable
+	local L = o.timerLayer
+	if L then
+		L:SetShown(active)
+		if active then
+			if not shownTimers[L] then L.text:SetText(TimerText()) end
+			shownTimers[L] = true
+		else
+			shownTimers[L] = nil
+		end
+	end
+	if o.look then
+		o.look:SetShown(not active)
+	else
+		o.timerActive = active
+	end
 end
 
 function Frames:UpdateFrame(frame)
 	local o = overlays[frame]
 	if not o then return end
 	ApplyFade(o)
+	ApplyTimer(o)
 	local enabled = ns.db.overlay[o.provider]
 	local unit = enabled and frame:IsVisible() and FrameUnit(frame)
 	if not unit then
@@ -302,6 +488,7 @@ function Frames:UpdateFrame(frame)
 		if unit ~= o.smUnit then
 			o.smUnit = unit
 			ns.Native.SetUnit(o.sensor, unit)
+			if o.barSensor then ns.Native.SetUnit(o.barSensor, unit) end
 		end
 		ns.Overheal.UpdateUnit(unit) -- caches max health for the fallback
 		ns.Overheal.UpdateGate(o.gate, unit, ns.db.overlay.noOverheal, 1)
@@ -313,6 +500,7 @@ function Frames:UpdateFrame(frame)
 		local left = ns.db.overlay.showTimer and ns.Remaining(aura)
 		o.timer:SetText(left and left < 10 and string.format("%d", left + 0.5) or "")
 		UpdateSpiral(o, unit, aura)
+		SetLegacyLook(o, not o.timerActive)
 		o:Show()
 	else
 		o:Hide()
@@ -414,6 +602,7 @@ function Frames:Relayout()
 		else
 			LayoutOverlay(o)
 		end
+		if o.timerLayer then LayoutTimer(o) end
 	end
 	pendingRelayout = not mutable or nil
 	if previewing then self:SetPreview(true) end
@@ -448,6 +637,9 @@ function Frames:Refresh()
 end
 
 function Frames:UpdateCooldown()
+	for _, o in pairs(overlays) do
+		if o.timerLayer then ns.Icon.ApplySwiftmendCooldown(o.timerLayer.swipe) end
+	end
 	self:Refresh()
 end
 

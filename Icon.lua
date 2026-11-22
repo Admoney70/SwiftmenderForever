@@ -119,6 +119,47 @@ local function OnCooldown(spell)
 	return button.cooldown:IsShown() and true or false
 end
 
+-- Seconds of Swiftmend cooldown left, or nil when it isn't on cooldown (or
+-- that can't be worked out). When the cooldown times are secret it counts
+-- from when the cooldown was first seen, using the last readable duration
+-- (or the spell's base cooldown).
+local cdSeenAt, cdLength
+local function Remaining(spell)
+	local now = GetTime()
+	local info = C_Spell and C_Spell.GetSpellCooldown and C_Spell.GetSpellCooldown(spell)
+	if IsSecret(info) then info = nil end
+	local start, duration
+	if info then
+		start, duration = info.startTime, info.duration
+	elseif GetSpellCooldown then
+		start, duration = GetSpellCooldown(spell)
+	end
+	if not IsSecret(start) and not IsSecret(duration) and start and duration then
+		if duration <= 1.5 then
+			cdSeenAt = nil
+			return
+		end
+		cdLength = duration
+		cdSeenAt = start
+		local left = start + duration - now
+		if left > 0 then return left end
+		return
+	end
+	if not OnCooldown(spell) then
+		cdSeenAt = nil
+		return
+	end
+	if not cdSeenAt then cdSeenAt = now end
+	local length = cdLength
+	if not length and GetSpellBaseCooldown then
+		local ms = GetSpellBaseCooldown(spell)
+		if not IsSecret(ms) and type(ms) == "number" and ms > 0 then length = ms / 1000 end
+	end
+	if not length then return end
+	local left = cdSeenAt + length - now
+	if left > 0 then return left end
+end
+
 -- Which look the icon should have right now.
 local function CurrentState(cfg, spell, unit)
 	local usable, noMana = Usability(spell)
@@ -475,10 +516,10 @@ function Icon:RefreshUnit()
 	self:Refresh()
 end
 
-function Icon:UpdateCooldown()
-	if not button then return end
+-- Shows Swiftmend's own cooldown (not the global cooldown) on a Cooldown
+-- widget; also used for the raid-frame markers.
+function Icon.ApplySwiftmendCooldown(cd)
 	local spell = SwiftmendSpell()
-	local cd = button.cooldown
 	local info = C_Spell and C_Spell.GetSpellCooldown and C_Spell.GetSpellCooldown(spell)
 	if IsSecret(info) then info = nil end
 	if info then
@@ -502,6 +543,11 @@ function Icon:UpdateCooldown()
 		local start, duration = GetSpellCooldown(spell)
 		if start and duration and duration > 1.5 then cd:SetCooldown(start, duration) else cd:SetCooldown(0, 0) end
 	end
+end
+
+function Icon:UpdateCooldown()
+	if not button then return end
+	Icon.ApplySwiftmendCooldown(button.cooldown)
 	self:Refresh()
 end
 
@@ -509,6 +555,11 @@ end
 function Icon.SwiftmendOnCooldown()
 	if not button then return false end
 	return OnCooldown(SwiftmendSpell())
+end
+
+function Icon.SwiftmendRemaining()
+	if not button then return end
+	return Remaining(SwiftmendSpell())
 end
 
 function Icon:Init()

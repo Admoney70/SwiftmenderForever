@@ -347,6 +347,9 @@ local function Build()
 	f.overhealInfo:SetWidth(300)
 	f.overhealInfo:SetJustifyH("LEFT")
 	y = y - 16
+	_, y = Cycle(right, "Cooldown timer", y, ns.Frames.TIMER_MODES,
+		function() return ns.Frames.TimerMode() end,
+		function(v) db().overlay.cooldownTimer = v end, "frames")
 	_, y = Check(right, "Fade markers while Swiftmend is on cooldown", y,
 		function() return db().overlay.fadeOnCooldown end,
 		function(v) db().overlay.fadeOnCooldown = v end, "frames")
@@ -378,7 +381,8 @@ local function Build()
 	local rightBottom = y - 50 -- below the reset button and the note
 
 	-- fit the window to the taller column, plus room for the status lines
-	f:SetHeight(math.max(-leftBottom, -rightBottom) + 44)
+	local height = math.max(-leftBottom, -rightBottom) + 44
+	f:SetHeight(height)
 	previewNote:SetWidth(290)
 	previewNote:SetJustifyH("LEFT")
 	previewNote:SetText("A preview marker shows on every raid frame while this window is open.")
@@ -389,6 +393,11 @@ local function Build()
 	f.status:SetJustifyH("LEFT")
 
 	f:SetScript("OnShow", function()
+		-- shrink to fit short screens (large UI scale)
+		local screen = UIParent:GetHeight()
+		if type(screen) == "number" and screen > 0 then
+			f:SetScale(math.min(1, (screen - 20) / height))
+		end
 		Config:Sync()
 		ns.Frames:SetPreview(true)
 	end)
