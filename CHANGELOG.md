@@ -1,5 +1,11 @@
 # Swiftmender Forever
 
+## 1.9.2
+
+- New `/sm debug`: shows whether the raid-marker cooldown timer and the overheal check have what they
+  need on this client (Swiftmend cooldown, aura buttons, duration bar, missing health), to help get the
+  "Timer" style working.
+
 ## 1.9.1
 
 - Reworked 1.9.0's cooldown timer into one raid-marker setting, **On Swiftmend cooldown**:

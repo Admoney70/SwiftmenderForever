@@ -88,6 +88,7 @@ The target icon starts **unlocked**. Drag it where you want it, then right-click
 | `/sm bordersize <1-10>` | Set the raid frame border thickness (default 2) |
 | `/sm icontimer` | Show or hide the HoT time left on the target icon |
 | `/sm name` | Show or hide the name under the target icon |
+| `/sm debug` | Show what the cooldown timer and overheal check can see (for troubleshooting) |
 | `/sm health [unit]` | Show the health values the overheal check can see (default: your target) |
 | `/sm self` | Turn on or off following yourself when you have no friendly target |
 | `/sm glow [glow\|proc\|pixel]` | Turn the target icon's overheal glow on or off, or set its style |

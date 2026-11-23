@@ -240,6 +240,7 @@ end
 
 -- The bar sensor's button: nothing visible, just the duration bar.
 local function DecorateBar(o, button)
+	o.barButton = button
 	if button.SetMouseClickEnabled then button:SetMouseClickEnabled(false) end
 	if button.SetMouseMotionEnabled then button:SetMouseMotionEnabled(false) end
 	button:ClearAllPoints()
@@ -564,6 +565,46 @@ function Frames:ListUnmatched()
 	end, function()
 		if n == 0 then ns.Print("  no unmatched unit frames found") end
 	end)
+end
+
+-- /sm debug: what the cooldown timer and overheal gate can see in game.
+function Frames:Debug()
+	local cfg = ns.db.overlay
+	local left = ns.Icon.SwiftmendRemaining()
+	ns.Print(string.format("on cooldown %s (%s s left), on-cooldown style %s, overheal filter %s (heal %s)",
+		tostring(onCooldown), left and string.format("%.1f", left) or "?", Frames.CooldownStyle(),
+		tostring(cfg.noOverheal), tostring(ns.Overheal.HealAmount())))
+	print("  UnitHealthMissing " .. (UnitHealthMissing and "yes" or "no")
+		.. ", AuraContainer " .. (ns.Native.Available() and "yes" or "no"))
+	local n, sample = 0, nil
+	for frame, o in pairs(overlays) do
+		sample = sample or o.button or o.barButton
+		n = n + 1
+		if n <= 4 then
+			print(string.format("  %s (%s): marker button %s, timer bar button %s, bar API %s, timer shown %s, marker shown %s",
+				SafeName(frame) or "?", tostring(o.smUnit), tostring(o.button ~= nil), tostring(o.barButton ~= nil),
+				o.barButton and tostring(not o.timerUnavailable) or "?",
+				tostring(o.timerLayer and o.timerLayer:IsShown() or false), tostring(o.look and o.look:IsShown() or false)))
+		end
+	end
+	print(string.format("  %d raid frames hooked", n))
+	-- the native aura button's methods, to see what this client offers
+	if sample then
+		local names = {}
+		local mt = getmetatable(sample)
+		local index = mt and type(mt.__index) == "table" and mt.__index
+		if index then
+			for k in pairs(index) do
+				if type(k) == "string" and (k:find("Duration") or k:find("^SetIcon") or k:find("Application")) then
+					names[#names + 1] = k
+				end
+			end
+		end
+		table.sort(names)
+		print("  aura button methods: " .. (#names > 0 and table.concat(names, ", ") or "none found (or not listable)"))
+	else
+		print("  no aura button yet: put your HoT on someone, then run /sm debug again")
+	end
 end
 
 function Frames:Count()
