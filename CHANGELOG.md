@@ -1,5 +1,15 @@
 # Swiftmender Forever
 
+## 1.9.1
+
+- Reworked 1.9.0's cooldown timer into one raid-marker setting, **On Swiftmend cooldown**:
+  - **Fade:** the marker fades (as before; the default).
+  - **Timer:** the marker is replaced by the seconds left, with no icon.
+  - **None:** the marker stays as it is.
+  This replaces the "Fade markers while Swiftmend is on cooldown" checkbox and 1.9.0's "Cooldown
+  timer" setting (the "Over icon" mode is gone); your current choice carries over. Set it in `/sm` or
+  with `/sm oncd fade|timer|none`.
+
 ## 1.9.0
 
 - New "Cooldown timer" option for the raid-frame markers while Swiftmend is on cooldown:

@@ -9,10 +9,9 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
   its own border (black, 1px by default), and the whole raid frame gets a border too (green, 2px).
   Each border can be turned off and has its own thickness and colour. The icon can show a spiral and
   a countdown for the HoT's remaining duration; each can be turned off.
-  - Markers and borders fade while Swiftmend is on cooldown (optional, adjustable opacity).
-  - Optional Swiftmend cooldown timer on the markers: **Over icon** (dark sweep and seconds left on the
-    icon) or **Timer only** (just the seconds, in place of the marker). Shown only on players with your
-    HoT, and works in combat.
+  - While Swiftmend is on cooldown the markers **fade** (adjustable opacity, the default), are replaced
+    by a **timer** showing the seconds left (only on players with your HoT; works in combat), or stay
+    as they are (**None**).
   - Optional overheal filter: only show a marker when the player is missing at least as much health as
     Swiftmend would heal. The heal is estimated from your Rejuvenation tooltip (scale it, or set a fixed
     amount) and can count incoming heals. Off by default. It reads the game's missing health
@@ -83,8 +82,8 @@ The target icon starts **unlocked**. Drag it where you want it, then right-click
 | `/sm offset <x> <y>` | Set the marker's offset in pixels from its anchor, e.g. `/sm offset 4 -6` |
 | `/sm marker` / `/sm border` | Turn the marker icon or the raid frame border on or off |
 | `/sm overheal [amount\|auto]` | Turn the overheal filter on or off, or set a fixed heal amount (`auto` = tooltip estimate) |
-| `/sm cdtimer [off\|over\|only]` | Swiftmend cooldown timer on the raid markers (no argument cycles) |
-| `/sm markerfade [0-1]` | Turn marker fading on Swiftmend cooldown on or off, or set its opacity |
+| `/sm oncd [fade\|timer\|none]` | What markers do while Swiftmend is on cooldown (no argument cycles) |
+| `/sm markerfade [0-1]` | Toggle fading markers on Swiftmend cooldown, or set the faded opacity |
 | `/sm markerborder [1-10]` | Turn the marker icon's border on or off, or set its thickness |
 | `/sm bordersize <1-10>` | Set the raid frame border thickness (default 2) |
 | `/sm icontimer` | Show or hide the HoT time left on the target icon |

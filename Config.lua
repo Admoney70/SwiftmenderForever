@@ -347,13 +347,10 @@ local function Build()
 	f.overhealInfo:SetWidth(300)
 	f.overhealInfo:SetJustifyH("LEFT")
 	y = y - 16
-	_, y = Cycle(right, "Cooldown timer", y, ns.Frames.TIMER_MODES,
-		function() return ns.Frames.TimerMode() end,
-		function(v) db().overlay.cooldownTimer = v end, "frames")
-	_, y = Check(right, "Fade markers while Swiftmend is on cooldown", y,
-		function() return db().overlay.fadeOnCooldown end,
-		function(v) db().overlay.fadeOnCooldown = v end, "frames")
-	_, y = Slider(right, "Marker opacity on cooldown", y, 0, 1, 0.05,
+	_, y = Cycle(right, "On Swiftmend cooldown", y, ns.Frames.COOLDOWN_STYLES,
+		function() return ns.Frames.CooldownStyle() end,
+		function(v) db().overlay.onCooldown = v end, "frames")
+	_, y = Slider(right, "Faded marker opacity", y, 0, 1, 0.05,
 		function() return db().overlay.cooldownAlpha end,
 		function(v) db().overlay.cooldownAlpha = v end, "frames", "%.2f")
 	_, y = Slider(right, "Marker size", y, 6, 40, 1,

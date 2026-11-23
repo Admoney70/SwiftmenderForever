@@ -26,8 +26,8 @@ local function Help()
 	print("  /sm spiral | timer     - toggle the marker's HoT spiral / countdown")
 	print("  /sm bordersize <1-10>  - raid-frame border thickness")
 	print("  /sm markerborder [1-10] - toggle the marker icon border, or set its thickness")
-	print("  /sm markerfade [0-1]   - toggle fading markers on Swiftmend cooldown, or set the opacity")
-	print("  /sm cdtimer [off|over|only] - Swiftmend cooldown timer on the markers")
+	print("  /sm oncd [fade|timer|none] - what markers do on Swiftmend cooldown (no argument cycles)")
+	print("  /sm markerfade [0-1]   - fade markers on Swiftmend cooldown, or set the faded opacity")
 	print("  /sm overheal [amount|auto] - toggle 'only show when it won't overheal', or set the heal amount")
 	print("  /sm iconborder [1-10]  - toggle the target icon border, or set its thickness")
 	print("  /sm icontimer          - toggle the HoT time-left number on the target icon")
@@ -166,27 +166,29 @@ local function Handler(msg)
 		local heal = ns.Overheal.HealAmount()
 		ns.Print("only show markers when it won't overheal: " .. OnOff(db.overlay.noOverheal)
 			.. " (heal " .. (heal and tostring(heal) or "unknown") .. ")")
-	elseif cmd == "cdtimer" then
-		local map = { off = "Off", over = "Over icon", only = "Timer only" }
-		local modes, cur = ns.Frames.TIMER_MODES, ns.Frames.TimerMode()
-		local nextMode = map[rest:lower()]
-		if not nextMode then
-			for i, m in ipairs(modes) do
-				if m == cur then nextMode = modes[i % #modes + 1] end
+	elseif cmd == "oncd" or cmd == "cdtimer" then
+		local styles, cur = ns.Frames.COOLDOWN_STYLES, ns.Frames.CooldownStyle()
+		local want
+		for _, v in ipairs(styles) do
+			if v:lower() == rest:lower() then want = v end
+		end
+		if not want then
+			for i, v in ipairs(styles) do
+				if v == cur then want = styles[i % #styles + 1] end
 			end
 		end
-		db.overlay.cooldownTimer = nextMode
+		db.overlay.onCooldown = want
 		ns.Frames:Relayout()
-		ns.Print("marker cooldown timer: " .. nextMode)
+		ns.Print("markers on Swiftmend cooldown: " .. want)
 	elseif cmd == "markerfade" then
 		if tonumber(rest) then
 			db.overlay.cooldownAlpha = math.max(0, math.min(1, tonumber(rest)))
-			db.overlay.fadeOnCooldown = true
+			db.overlay.onCooldown = "Fade"
 		else
-			db.overlay.fadeOnCooldown = not db.overlay.fadeOnCooldown
+			db.overlay.onCooldown = ns.Frames.CooldownStyle() == "Fade" and "None" or "Fade"
 		end
 		ns.Frames:Refresh()
-		ns.Print(string.format("fade markers on cooldown %s (%.2f)", OnOff(db.overlay.fadeOnCooldown), db.overlay.cooldownAlpha))
+		ns.Print(string.format("markers on Swiftmend cooldown: %s (faded opacity %.2f)", ns.Frames.CooldownStyle(), db.overlay.cooldownAlpha))
 	elseif cmd == "markerborder" then
 		if tonumber(rest) then
 			db.overlay.iconBorderSize = math.max(1, math.min(10, math.floor(tonumber(rest))))

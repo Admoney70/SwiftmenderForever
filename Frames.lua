@@ -198,30 +198,30 @@ local function CreateOverlay(frame, provider)
 end
 
 --------------------------------------------------------------------------
--- Swiftmend cooldown timer on the markers
+-- Swiftmend cooldown: fade or timer
 --------------------------------------------------------------------------
--- While Swiftmend is on cooldown the marker can show the time left, over
--- the icon ("Over icon": icon, dark sweep and number) or instead of it
--- ("Timer only"). These are frames of ours, so they can change in combat.
--- In native mode they must still only show on players with the HoT, and the
--- native button can't be restyled in combat, so a second sensor drives an
--- invisible duration bar inside its button: a very wide StatusBar whose fill
--- is the whole area while the HoT runs and nothing once it's gone. Our
--- clipping frame is anchored to that fill, so the timer inside it appears
--- and disappears with the HoT, without reading any aura data.
+-- While Swiftmend is on cooldown the marker can fade ("Fade"), be replaced
+-- by the seconds left ("Timer"), or stay as it is ("None"). The timer is a
+-- frame of ours, so it can change in combat. In native mode it must still
+-- only show on players with the HoT, and the native button can't be
+-- restyled in combat, so a second sensor drives an invisible duration bar
+-- inside its button: a very wide StatusBar whose fill is the whole area
+-- while the HoT runs and nothing once it's gone. Our clipping frame is
+-- anchored to that fill, so the timer inside it appears and disappears with
+-- the HoT, without reading any aura data.
 
-local TIMER_MODES = { "Off", "Over icon", "Timer only" }
-Frames.TIMER_MODES = TIMER_MODES
+local STYLES = { "Fade", "Timer", "None" }
+Frames.COOLDOWN_STYLES = STYLES
 local BAR_WIDTH = 100000
 local BAR_MARGIN = 40
 local BAR_TEXTURE = "Interface\\Buttons\\WHITE8X8"
 
-function Frames.TimerMode()
-	local mode = ns.db.overlay.cooldownTimer
-	for _, m in ipairs(TIMER_MODES) do
-		if m == mode then return m end
+function Frames.CooldownStyle()
+	local style = ns.db.overlay.onCooldown
+	for _, v in ipairs(STYLES) do
+		if v == style then return v end
 	end
-	return "Off"
+	return "Fade"
 end
 
 local barOptions
@@ -269,20 +269,14 @@ end
 
 local function LayoutTimer(o)
 	local cfg, L = ns.db.overlay, o.timerLayer
-	local over = Frames.TimerMode() == "Over icon"
 	L.marker:ClearAllPoints()
 	L.marker:SetSize(cfg.size, cfg.size)
 	L.marker:SetPoint(cfg.point, o, cfg.point, cfg.offsetX, cfg.offsetY)
-	L.icon:SetShown(over and cfg.showIcon)
-	L.swipe:SetShown(over)
 	local font = L.text:GetFont() or STANDARD_TEXT_FONT
 	if font then L.text:SetFont(font, math.max(8, math.floor(cfg.size * 0.7 + 0.5)), "OUTLINE") end
-	ns.LayoutEdges(L.edges, o, cfg.borderSize, cfg.borderColor, over and cfg.showBorder)
-	ns.LayoutEdges(L.iconEdges, L.marker, cfg.iconBorderSize, cfg.iconBorderColor,
-		over and cfg.showIcon and cfg.showIconBorder, true)
 end
 
--- Builds the timer layer the first time a timer mode is used.
+-- Builds the timer the first time the Timer style is used.
 local function EnsureTimer(o)
 	if o.timerLayer then return end
 	local parent = o
@@ -302,26 +296,11 @@ local function EnsureTimer(o)
 	L:SetAllPoints(o)
 	L:SetFrameLevel(parent:GetFrameLevel() + 1)
 	L.marker = CreateFrame("Frame", nil, L)
-	L.icon = L:CreateTexture(nil, "ARTWORK")
-	L.icon:SetAllPoints(L.marker)
-	L.icon:SetTexture(ns.SpellTexture(ns.SPELLS.SWIFTMEND))
-	L.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
-	L.swipe = CreateFrame("Cooldown", nil, L, "CooldownFrameTemplate")
-	L.swipe:SetAllPoints(L.marker)
-	L.swipe:SetDrawEdge(false)
-	L.swipe:SetDrawBling(false)
-	L.swipe:SetHideCountdownNumbers(true)
-	local textHost = CreateFrame("Frame", nil, L)
-	textHost:SetAllPoints(L)
-	textHost:SetFrameLevel(L.swipe:GetFrameLevel() + 2)
-	L.text = textHost:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
+	L.text = L:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
 	L.text:SetPoint("CENTER", L.marker, "CENTER", 0, 0)
-	L.edges = ns.CreateEdges(L)
-	L.iconEdges = ns.CreateEdges(textHost, 5)
 	L:Hide()
 	o.timerLayer = L
 	LayoutTimer(o)
-	ns.Icon.ApplySwiftmendCooldown(L.swipe)
 end
 
 -- Countdown text, updated a few times a second while any timer shows.
@@ -443,18 +422,20 @@ local onCooldown = false
 
 -- Our overlay frame is addon-owned, so its alpha can change in combat and
 -- fades the native marker and borders inside it.
--- (In native mode only the normal look fades, not the cooldown timer.)
+-- (The Timer style falls back to fading where the client can't gate it.)
 local function ApplyFade(o)
 	local cfg = ns.db.overlay
 	local target = o.look or o
-	if cfg.fadeOnCooldown and onCooldown then target:SetAlpha(cfg.cooldownAlpha) else target:SetAlpha(1) end
+	local style = Frames.CooldownStyle()
+	local fade = style == "Fade" or (style == "Timer" and o.timerUnavailable)
+	if fade and onCooldown then target:SetAlpha(cfg.cooldownAlpha) else target:SetAlpha(1) end
 end
 
 -- Swaps between the normal look and the cooldown timer.
 local function ApplyTimer(o)
-	local mode = Frames.TimerMode()
-	if mode ~= "Off" then EnsureTimer(o) end
-	local active = mode ~= "Off" and onCooldown and not o.timerUnavailable
+	local timer = Frames.CooldownStyle() == "Timer"
+	if timer then EnsureTimer(o) end
+	local active = timer and onCooldown and not o.timerUnavailable
 	local L = o.timerLayer
 	if L then
 		L:SetShown(active)
@@ -637,9 +618,6 @@ function Frames:Refresh()
 end
 
 function Frames:UpdateCooldown()
-	for _, o in pairs(overlays) do
-		if o.timerLayer then ns.Icon.ApplySwiftmendCooldown(o.timerLayer.swipe) end
-	end
 	self:Refresh()
 end
 

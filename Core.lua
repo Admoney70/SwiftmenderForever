@@ -33,8 +33,7 @@ ns.defaults = {
 		overhealScale = 100,    -- % of the estimated heal (Rejuvenation tooltip)
 		overhealAmount = 0,     -- fixed heal amount instead of the estimate (0 = auto)
 		overhealPredicted = true, -- count incoming heals as already landed
-		fadeOnCooldown = true,  -- fade markers while Swiftmend is on cooldown
-		cooldownTimer = "Off",  -- Swiftmend cooldown timer: Off, Over icon, Timer only
+		onCooldown = "Fade",    -- while Swiftmend is on cooldown: Fade, Timer or None
 		cooldownAlpha = 0.35,
 		showIconBorder = true,  -- border around the marker icon
 		iconBorderSize = 1,
@@ -338,6 +337,16 @@ events:SetScript("OnEvent", function(self, event, arg1)
 			SwiftmenderForeverDB.onlyMine = true
 			SwiftmenderForeverDB.mineByDefault = true
 		end
+		-- 1.9.1 merged the fade checkbox and the cooldown timer into one choice
+		local ov = SwiftmenderForeverDB.overlay
+		if type(ov) == "table" and ov.onCooldown == nil and (ov.fadeOnCooldown ~= nil or ov.cooldownTimer ~= nil) then
+			if ov.cooldownTimer == "Over icon" or ov.cooldownTimer == "Timer only" then
+				ov.onCooldown = "Timer"
+			elseif ov.fadeOnCooldown == false then
+				ov.onCooldown = "None"
+			end
+		end
+		if type(ov) == "table" then ov.fadeOnCooldown, ov.cooldownTimer = nil, nil end
 		CopyDefaults(ns.defaults, SwiftmenderForeverDB)
 		ns.db = SwiftmenderForeverDB
 		ns.Native.Load()
