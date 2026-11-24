@@ -557,6 +557,16 @@ function Icon.SwiftmendOnCooldown()
 	return OnCooldown(SwiftmendSpell())
 end
 
+-- Full Swiftmend cooldown in seconds (last readable, else the base
+-- cooldown), or nil when unknown.
+function Icon.SwiftmendCooldownLength()
+	if cdLength then return cdLength end
+	if GetSpellBaseCooldown then
+		local ms = GetSpellBaseCooldown(SwiftmendSpell())
+		if not IsSecret(ms) and type(ms) == "number" and ms > 0 then return ms / 1000 end
+	end
+end
+
 function Icon.SwiftmendRemaining()
 	if not button then return end
 	return Remaining(SwiftmendSpell())

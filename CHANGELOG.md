@@ -1,5 +1,14 @@
 # Swiftmender Forever
 
+## 1.9.4
+
+- The raid-marker **Timer** now counts down in combat. The game refuses text changes inside aura buttons
+  while auras are hidden, so a marker used to fall back to fading. Each raid frame now has one aura button
+  per second of the cooldown, each with a fixed number; in combat the addon only switches which one shows.
+  It still shows only on players with your HoT (and, with the overheal filter on, only when Swiftmend
+  won't overheal).
+- Fixed `/sm debug` and `/sm health` erroring when the heal amount or cooldown length was unknown.
+
 ## 1.9.3
 
 - Fixed the "Anchoring disallowed ... forbidden aspects" errors from the raid-marker cooldown timer. The

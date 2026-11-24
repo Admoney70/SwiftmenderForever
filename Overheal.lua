@@ -240,7 +240,7 @@ function Overheal.Report(unit)
 	print(string.format("  UnitGetIncomingHeals %s, in combat %s", call(UnitGetIncomingHeals, unit),
 		tostring(InCombatLockdown())))
 	print(string.format("  heal: tooltip estimate %s, used %s (fixed %s, %d%%), counts incoming %s",
-		tostring(estimate), tostring(Overheal.HealAmount()), tostring(ns.db.overlay.overhealAmount),
+		tostring(estimate), tostring((Overheal.HealAmount())), tostring(ns.db.overlay.overhealAmount),
 		ns.db.overlay.overhealScale or 100, tostring(predicted)))
 	local path = (UnitHealthMissing and Overheal.HealAmount()) and "missing health"
 		or Overheal.Supported() and "health percent curve (needs cached max)" or "none"
