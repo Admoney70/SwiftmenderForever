@@ -1,5 +1,14 @@
 # Swiftmender Forever
 
+## 1.9.3
+
+- Fixed the "Anchoring disallowed ... forbidden aspects" errors from the raid-marker cooldown timer. The
+  game doesn't let addon frames anchor to aura buttons, so the countdown now lives in its own aura button
+  (shown, like the marker, only on players with your HoT) instead of an anchored layer.
+- With **Timer**, a marker on Swiftmend cooldown shows only the seconds left (no icon). If the game
+  refuses to update the countdown in combat, that marker fades instead of showing a frozen number;
+  `/sm debug` reports it.
+
 ## 1.9.2
 
 - New `/sm debug`: shows whether the raid-marker cooldown timer and the overheal check have what they
