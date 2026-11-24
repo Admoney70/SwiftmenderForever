@@ -331,7 +331,7 @@ end
 
 local events = CreateFrame("Frame")
 events:RegisterEvent("ADDON_LOADED")
-events:SetScript("OnEvent", function(self, event, arg1)
+events:SetScript("OnEvent", function(self, event, arg1, arg2, arg3)
 	if event == "ADDON_LOADED" then
 		if arg1 ~= ADDON then return end
 		self:UnregisterEvent("ADDON_LOADED")
@@ -363,6 +363,7 @@ events:SetScript("OnEvent", function(self, event, arg1)
 		self:RegisterEvent("PLAYER_TARGET_CHANGED")
 		self:RegisterEvent("SPELLS_CHANGED")
 		self:RegisterEvent("SPELL_UPDATE_COOLDOWN")
+		self:RegisterUnitEvent("UNIT_SPELLCAST_SUCCEEDED", "player")
 		self:RegisterEvent("UNIT_AURA")
 		self:RegisterEvent("UNIT_HEALTH")
 		self:RegisterEvent("UNIT_MAXHEALTH")
@@ -384,6 +385,10 @@ events:SetScript("OnEvent", function(self, event, arg1)
 		ns.Overheal.TargetChanged()
 		Call("TargetChanged")
 		Call("RefreshUnit", "target")
+	elseif event == "UNIT_SPELLCAST_SUCCEEDED" then
+		-- arg3 is the spell id; times Swiftmend when its cooldown is secret
+		ns.Icon.SpellCast(arg3)
+		Call("UpdateCooldown")
 	elseif event == "SPELL_UPDATE_COOLDOWN" then
 		Call("UpdateCooldown")
 	elseif event == "SPELLS_CHANGED" then

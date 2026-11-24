@@ -1,5 +1,13 @@
 # Swiftmender Forever
 
+## 1.10.1
+
+- Fixed the raid-marker timer randomly switching back to the icon and counting inaccurately in combat.
+  With the cooldown hidden from addons, the addon guessed from the target icon's sweep, which the global
+  cooldown of any other spell cleared. It now times Swiftmend from the moment you cast it, using the
+  cooldown length learned out of combat (or Swiftmend's base cooldown). The target icon's cooldown sweep
+  uses the same timing.
+
 ## 1.10.0
 
 - New "Raid marker timer" settings for the countdown: **font** (Default, Friz Quadrata, Arial Narrow,

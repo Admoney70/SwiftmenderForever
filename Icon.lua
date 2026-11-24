@@ -95,6 +95,29 @@ local function InRange(spell, unit)
 	return r
 end
 
+-- When the cooldown times are secret (combat) the addon times Swiftmend
+-- itself: castAt is when the player last cast it (UNIT_SPELLCAST_SUCCEEDED),
+-- and cdLength the last readable cooldown length (else the base cooldown).
+-- The global cooldown can't disturb that, unlike watching the swipe.
+local castAt, cdSeenAt, cdLength
+
+local function CooldownLength(spell)
+	if cdLength then return cdLength end
+	if GetSpellBaseCooldown then
+		local ms = GetSpellBaseCooldown(spell)
+		if not IsSecret(ms) and type(ms) == "number" and ms > 0 then return ms / 1000 end
+	end
+end
+
+-- Seconds left by the addon's own timing, or nil.
+local function TimedLeft(spell)
+	if not castAt then return end
+	local length = CooldownLength(spell)
+	if not length then return end
+	local left = castAt + length - GetTime()
+	if left > 0 then return left end
+end
+
 -- True while Swiftmend is on its own cooldown (the global cooldown alone
 -- doesn't count).
 local function OnCooldown(spell)
@@ -115,15 +138,16 @@ local function OnCooldown(spell)
 			return duration > 1.5 and start + duration - GetTime() > 0
 		end
 	end
-	-- cooldown values are secret: fall back to whether the swipe is running
+	-- cooldown values are secret: use our own timing of the last cast
+	if castAt and CooldownLength(spell) then return TimedLeft(spell) ~= nil end
+	-- no cast seen yet: fall back to whether the swipe is running
 	return button.cooldown:IsShown() and true or false
 end
 
 -- Seconds of Swiftmend cooldown left, or nil when it isn't on cooldown (or
 -- that can't be worked out). When the cooldown times are secret it counts
--- from when the cooldown was first seen, using the last readable duration
--- (or the spell's base cooldown).
-local cdSeenAt, cdLength
+-- from the last cast (or, before any cast was seen, from when the cooldown
+-- was first noticed).
 local function Remaining(spell)
 	local now = GetTime()
 	local info = C_Spell and C_Spell.GetSpellCooldown and C_Spell.GetSpellCooldown(spell)
@@ -145,16 +169,13 @@ local function Remaining(spell)
 		if left > 0 then return left end
 		return
 	end
+	if castAt and CooldownLength(spell) then return TimedLeft(spell) end
 	if not OnCooldown(spell) then
 		cdSeenAt = nil
 		return
 	end
 	if not cdSeenAt then cdSeenAt = now end
-	local length = cdLength
-	if not length and GetSpellBaseCooldown then
-		local ms = GetSpellBaseCooldown(spell)
-		if not IsSecret(ms) and type(ms) == "number" and ms > 0 then length = ms / 1000 end
-	end
+	local length = CooldownLength(spell)
 	if not length then return end
 	local left = cdSeenAt + length - now
 	if left > 0 then return left end
@@ -527,6 +548,10 @@ function Icon.ApplySwiftmendCooldown(cd)
 		if not IsSecret(start) and not IsSecret(duration) then
 			-- skip the global cooldown so only Swiftmend's own cooldown spins
 			if duration and duration > 1.5 then cd:SetCooldown(start, duration) else cd:SetCooldown(0, 0) end
+		elseif castAt and CooldownLength(spell) then
+			-- secret times: our own timing of the last cast (immune to the GCD)
+			local left = TimedLeft(spell)
+			if left then cd:SetCooldown(castAt, CooldownLength(spell)) else cd:SetCooldown(0, 0) end
 		elseif not IsSecret(gcd) and gcd then
 			cd:SetCooldown(0, 0)
 		elseif C_Spell.GetSpellCooldownDuration and cd.SetCooldownFromDurationObject then
@@ -560,10 +585,16 @@ end
 -- Full Swiftmend cooldown in seconds (last readable, else the base
 -- cooldown), or nil when unknown.
 function Icon.SwiftmendCooldownLength()
-	if cdLength then return cdLength end
-	if GetSpellBaseCooldown then
-		local ms = GetSpellBaseCooldown(SwiftmendSpell())
-		if not IsSecret(ms) and type(ms) == "number" and ms > 0 then return ms / 1000 end
+	return CooldownLength(SwiftmendSpell())
+end
+
+-- UNIT_SPELLCAST_SUCCEEDED for the player: note when Swiftmend was cast.
+function Icon.SpellCast(spellID)
+	if spellID == nil or IsSecret(spellID) then return end
+	local spell = SwiftmendSpell()
+	if spellID == spell or spellID == ns.SPELLS.SWIFTMEND
+		or ns.SpellName(spellID) == ns.SpellName(ns.SPELLS.SWIFTMEND) then
+		castAt = GetTime()
 	end
 end
 
