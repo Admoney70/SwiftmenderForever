@@ -241,8 +241,65 @@ local function CountdownSeconds()
 	return math.min(MAX_SECONDS, math.max(1, math.ceil(length)))
 end
 
+-- Countdown font: face, size (0 = 70% of the marker), outline and colour.
+local BUILTIN_FONTS = {
+	{ "Default" },
+	{ "Friz Quadrata", "Fonts\\FRIZQT__.TTF" },
+	{ "Arial Narrow", "Fonts\\ARIALN.TTF" },
+	{ "Morpheus", "Fonts\\MORPHEUS.TTF" },
+	{ "Skurri", "Fonts\\SKURRI.TTF" },
+}
+local OUTLINES = { Outline = "OUTLINE", Thick = "THICKOUTLINE", None = "" }
+Frames.TIMER_OUTLINES = { "Outline", "Thick", "None" }
+
+local function SharedMedia()
+	return LibStub and LibStub("LibSharedMedia-3.0", true)
+end
+
+-- Font names for the settings window: built-ins, then any shared fonts.
+function Frames.FontNames()
+	local names, seen = {}, {}
+	for _, f in ipairs(BUILTIN_FONTS) do
+		names[#names + 1], seen[f[1]] = f[1], true
+	end
+	local lsm = SharedMedia()
+	if lsm and lsm.List then
+		for _, name in ipairs(lsm:List("font") or {}) do
+			if not seen[name] then names[#names + 1], seen[name] = name, true end
+		end
+	end
+	return names
+end
+
+local function DefaultFontPath()
+	local f = NumberFontNormal and NumberFontNormal.GetFont and NumberFontNormal:GetFont()
+	return f or STANDARD_TEXT_FONT
+end
+
+local function FontPath(name)
+	for _, f in ipairs(BUILTIN_FONTS) do
+		if f[1] == name then return f[2] or DefaultFontPath() end
+	end
+	local lsm = SharedMedia()
+	local path = lsm and lsm.Fetch and lsm:Fetch("font", name, true)
+	return path or DefaultFontPath()
+end
+
 local function TimerFontSize()
-	return math.max(8, math.floor(ns.db.overlay.size * 0.7 + 0.5))
+	local cfg = ns.db.overlay
+	if (cfg.timerFontSize or 0) > 0 then return cfg.timerFontSize end
+	return math.max(8, math.floor(cfg.size * 0.7 + 0.5))
+end
+
+local function StyleTimerText(fs)
+	local cfg = ns.db.overlay
+	local flags = OUTLINES[cfg.timerOutline] or "OUTLINE"
+	-- SetFont fails on a missing file: fall back to the default font
+	if not fs:SetFont(FontPath(cfg.timerFont), TimerFontSize(), flags) then
+		fs:SetFont(DefaultFontPath(), TimerFontSize(), flags)
+	end
+	local c = ns.BORDER_COLORS[ns.ColorName(cfg.timerColor)]
+	fs:SetTextColor(c[1], c[2], c[3], 1)
 end
 
 -- A number sensor's button: just its number, where the marker is.
@@ -258,8 +315,7 @@ local function DecorateNumber(o, button, n)
 		button.smNumber = button:CreateFontString(nil, "OVERLAY", "NumberFontNormal")
 		button.smNumber:SetPoint("CENTER", button, "CENTER", 0, 0)
 	end
-	local font = button.smNumber:GetFont() or STANDARD_TEXT_FONT
-	if font then button.smNumber:SetFont(font, TimerFontSize(), "OUTLINE") end
+	StyleTimerText(button.smNumber)
 	button.smNumber:SetText(tostring(n))
 end
 
@@ -269,8 +325,7 @@ local function LayoutLegacyTimer(o)
 	L.marker:ClearAllPoints()
 	L.marker:SetSize(cfg.size, cfg.size)
 	L.marker:SetPoint(cfg.point, o, cfg.point, cfg.offsetX, cfg.offsetY)
-	local font = L.text:GetFont() or STANDARD_TEXT_FONT
-	if font then L.text:SetFont(font, TimerFontSize(), "OUTLINE") end
+	StyleTimerText(L.text)
 end
 
 -- Builds (or extends) the countdown the first time the Timer style is used.

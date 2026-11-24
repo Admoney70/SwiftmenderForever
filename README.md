@@ -11,7 +11,8 @@ A World of Warcraft: **Forever** addon for Restoration Druids. It shows you at a
   a countdown for the HoT's remaining duration; each can be turned off.
   - While Swiftmend is on cooldown the markers **fade** (adjustable opacity, the default), are replaced
     by a **timer** showing the seconds left (only on players with your HoT; works in combat), or stay
-    as they are (**None**).
+    as they are (**None**). The timer's font, size, outline (Thick for bolder numbers) and colour can be
+    changed; fonts shared through LibSharedMedia are listed too.
   - Optional overheal filter: only show a marker when the player is missing at least as much health as
     Swiftmend would heal. The heal is estimated from your Rejuvenation tooltip (scale it, or set a fixed
     amount) and can count incoming heals. Off by default. It reads the game's missing health

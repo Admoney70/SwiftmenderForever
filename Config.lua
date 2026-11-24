@@ -293,7 +293,24 @@ local function Build()
 		ns.Print("settings reset")
 	end)
 
-	local leftBottom = y - 30 -- below the Rescan / Reset buttons
+	y = y - 36
+
+	-- Raid marker timer (the "Timer" style's countdown) -----------------
+	y = Header(left, "Raid marker timer", y)
+	_, y = Cycle(left, "Font", y, ns.Frames.FontNames(),
+		function() return db().overlay.timerFont end,
+		function(v) db().overlay.timerFont = v end, "frames")
+	_, y = Slider(left, "Font size (0 = auto)", y, 0, 40, 1,
+		function() return db().overlay.timerFontSize end,
+		function(v) db().overlay.timerFontSize = v end, "frames", nil, true)
+	_, y = Cycle(left, "Outline", y, ns.Frames.TIMER_OUTLINES,
+		function() return db().overlay.timerOutline end,
+		function(v) db().overlay.timerOutline = v end, "frames")
+	_, y = Cycle(left, "Color", y, ns.BORDER_COLOR_NAMES,
+		function() return ns.ColorName(db().overlay.timerColor) end,
+		function(v) db().overlay.timerColor = v end, "frames")
+
+	local leftBottom = y
 
 	-- Raid frames ---------------------------------------------------------
 	y = Header(right, "Raid frames", -34)

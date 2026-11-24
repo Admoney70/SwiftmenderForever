@@ -1,5 +1,11 @@
 # Swiftmender Forever
 
+## 1.10.0
+
+- New "Raid marker timer" settings for the countdown: **font** (Default, Friz Quadrata, Arial Narrow,
+  Morpheus, Skurri, plus any LibSharedMedia fonts), **size** (0 = auto), **outline** (Outline, Thick for
+  bolder numbers, or None) and **colour**. Changes made in combat apply when it ends.
+
 ## 1.9.5
 
 - Fixed the raid-marker countdown flickering every second. Switching numbers hid and re-showed the aura
