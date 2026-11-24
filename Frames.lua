@@ -208,9 +208,13 @@ end
 -- each raid frame gets one aura sensor per second of the cooldown, each
 -- button showing a fixed number ("15", "14", ... "1") set out of combat.
 -- The game shows them only on players with the HoT, like the marker, and
--- the countdown just shows the proxy frame (ours) for the current second,
--- which works in combat. o.look (the normal marker) and o.cdLook (the
--- numbers) swap while Swiftmend is on cooldown.
+-- the countdown just makes the proxy frame (ours) for the current second
+-- visible, which works in combat. o.look (the normal marker) and o.cdLook
+-- (the numbers) swap while Swiftmend is on cooldown.
+--
+-- Everything swaps by alpha, never by hiding: a hidden aura container stops
+-- tracking, and when shown again the game redraws its button a moment
+-- later, which made the countdown flicker every second.
 
 local STYLES = { "Fade", "Timer", "None" }
 Frames.COOLDOWN_STYLES = STYLES
@@ -275,13 +279,13 @@ local function EnsureTimer(o)
 		if not o.cdLook then
 			o.cdLook = CreateFrame("Frame", nil, o.gate.clip)
 			o.cdLook:SetAllPoints(o)
-			o.cdLook:Hide()
+			o.cdLook:SetAlpha(0)
 			o.numbers, o.numSensors, o.numButtons = {}, {}, {}
 		end
 		for n = #o.numbers + 1, CountdownSeconds() do
 			local proxy = CreateFrame("Frame", nil, o.cdLook)
 			proxy:SetAllPoints(o)
-			proxy:Hide()
+			proxy:SetAlpha(0)
 			o.numbers[n] = proxy
 			o.numSensors[n] = ns.Native.CreateSensor(proxy, o.smUnit, function(button) DecorateNumber(o, button, n) end)
 		end
@@ -303,8 +307,8 @@ local function ShowSecond(o, n)
 	if o.numbers then
 		n = math.min(n, #o.numbers)
 		if o.shownSecond == n then return end
-		if o.shownSecond and o.numbers[o.shownSecond] then o.numbers[o.shownSecond]:Hide() end
-		o.numbers[n]:Show()
+		if o.shownSecond and o.numbers[o.shownSecond] then o.numbers[o.shownSecond]:SetAlpha(0) end
+		o.numbers[n]:SetAlpha(1)
 		o.shownSecond = n
 	elseif o.timerLayer then
 		o.timerLayer.text:SetText(tostring(n))
@@ -432,6 +436,11 @@ local onCooldown = false
 local function ApplyFade(o, timerShown)
 	local cfg = ns.db.overlay
 	local target = o.look or o
+	if o.look and timerShown then
+		-- the countdown replaces the marker (alpha, not Hide: see above)
+		target:SetAlpha(0)
+		return
+	end
 	local style = Frames.CooldownStyle()
 	local fade = style == "Fade" or (style == "Timer" and not timerShown)
 	if fade and onCooldown then target:SetAlpha(cfg.cooldownAlpha) else target:SetAlpha(1) end
@@ -450,8 +459,7 @@ local function ApplyTimer(o)
 		shownTimers[o] = nil
 	end
 	if o.sensor then
-		o.look:SetShown(not active)
-		if o.cdLook then o.cdLook:SetShown(active) end
+		if o.cdLook then o.cdLook:SetAlpha(active and 1 or 0) end
 	else
 		if o.timerLayer then o.timerLayer:SetShown(active) end
 		o.timerActive = active
@@ -591,8 +599,8 @@ function Frames:Debug()
 			for _ in pairs(o.numButtons or {}) do made = made + 1 end
 			print(string.format("  %s (%s): marker button %s, countdown sensors %d (buttons made %d), showing second %s, countdown shown %s, marker shown %s",
 				SafeName(frame) or "?", tostring(o.smUnit), tostring(o.button ~= nil), o.numbers and #o.numbers or 0,
-				made, tostring(o.shownSecond), tostring(o.cdLook and o.cdLook:IsShown() or false),
-				tostring(o.look and o.look:IsShown() or false)))
+				made, tostring(o.shownSecond), tostring(o.cdLook and o.cdLook:GetAlpha() == 1 or false),
+				tostring(o.look and o.look:GetAlpha() > 0 or false)))
 		end
 	end
 	print(string.format("  %d raid frames hooked", n))

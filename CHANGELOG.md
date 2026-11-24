@@ -1,5 +1,11 @@
 # Swiftmender Forever
 
+## 1.9.5
+
+- Fixed the raid-marker countdown flickering every second. Switching numbers hid and re-showed the aura
+  buttons, which the game redraws a moment later; the numbers (and the swap with the icon) now switch
+  by transparency instead, so nothing is ever hidden.
+
 ## 1.9.4
 
 - The raid-marker **Timer** now counts down in combat. The game refuses text changes inside aura buttons
