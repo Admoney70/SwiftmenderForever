@@ -59,12 +59,16 @@ end
 
 -- Spell to query: the exact id from the spellbook when known (Forever may
 -- use its own ids), otherwise the base id.
+-- (Cached until the spellbook changes: this is called many times a pass.)
+local swiftmendID
 local function SwiftmendSpell()
+	if swiftmendID then return swiftmendID end
 	local name = ns.SpellName(ns.SPELLS.SWIFTMEND)
 	local info = name and C_Spell and C_Spell.GetSpellInfo and C_Spell.GetSpellInfo(name)
 	local id = info and not IsSecret(info) and info.spellID
-	if type(id) == "number" and not IsSecret(id) then return id end
-	return ns.SPELLS.SWIFTMEND
+	if type(id) ~= "number" or IsSecret(id) then id = ns.SPELLS.SWIFTMEND end
+	swiftmendID = id
+	return id
 end
 
 local function Usability(spell)
@@ -533,8 +537,13 @@ function Icon:TargetChanged()
 	end
 end
 
-function Icon:RefreshUnit()
-	self:Refresh()
+-- Only the target and the player can change the icon.
+function Icon:RefreshUnit(unit)
+	if unit == nil or unit == "target" or unit == "player" then self:Refresh() end
+end
+
+function Icon:SpellsChanged()
+	swiftmendID = nil
 end
 
 -- Shows Swiftmend's own cooldown (not the global cooldown) on a Cooldown

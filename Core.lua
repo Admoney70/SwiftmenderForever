@@ -293,7 +293,7 @@ ns.Call = Call
 -- server uses (see Native.Learn).
 local lastLearn = 0
 local function LearnPass()
-	if GetTime() - lastLearn < 2 then return end
+	if GetTime() - lastLearn < 5 then return end
 	lastLearn = GetTime()
 	for _, unit in ipairs(ns.GroupUnits()) do ns.Evaluate(unit) end
 	ns.Evaluate("target")
@@ -302,12 +302,12 @@ end
 -- Max health and the Rejuvenation heal estimate for the overheal gate.
 local lastOverheal = 0
 local function OverhealPass()
-	if GetTime() - lastOverheal < 1 then return end
+	if GetTime() - lastOverheal < 2 then return end
 	lastOverheal = GetTime()
 	ns.Overheal.Refresh()
 end
 
-function ns.RefreshAll()
+local function Pass(tick)
 	wipe(cache)
 	if ns.Native.Mutable() then
 		ns.Native.Flush()
@@ -315,7 +315,20 @@ function ns.RefreshAll()
 		if ns.Native.Available() then LearnPass() end
 		OverhealPass()
 	end
-	Call("Refresh")
+	for _, m in ipairs(ns.modules) do
+		local fn = (tick and m.Tick) or m.Refresh
+		if fn then fn(m) end
+	end
+end
+
+-- Full redraw (settings changes, roster and zone changes).
+function ns.RefreshAll()
+	Pass(false)
+end
+
+-- The periodic tick: the cheaper Tick where a module has one.
+function ns.TickAll()
+	Pass(true)
 end
 
 function ns.RefreshUnit(unit)
@@ -326,7 +339,7 @@ end
 local ticker
 function ns.StartTicker()
 	if ticker then ticker:Cancel() end
-	ticker = C_Timer.NewTicker(math.max(0.1, ns.db.updateInterval or 0.25), ns.RefreshAll)
+	ticker = C_Timer.NewTicker(math.max(0.1, ns.db.updateInterval or 0.25), function() ns.TickAll() end)
 end
 
 local events = CreateFrame("Frame")
@@ -369,13 +382,18 @@ events:SetScript("OnEvent", function(self, event, arg1, arg2, arg3)
 		self:RegisterEvent("UNIT_MAXHEALTH")
 		ns.StartTicker()
 	elseif event == "UNIT_AURA" then
-		-- the update payload is secret in combat; only the unit token is used
-		if ValidUnit(arg1) then ns.RefreshUnit(arg1) end
+		-- the update payload is secret in combat; only the unit token is used.
+		-- Native markers show and hide themselves, so raid frames need no
+		-- Lua work here; the icon only cares about the target and you.
+		if not ValidUnit(arg1) then return end
+		cache[arg1] = nil
+		if not ns.Native.Available() then ns.Frames:RefreshUnit(arg1) end
+		ns.Icon:RefreshUnit(arg1)
 	elseif event == "UNIT_HEALTH" or event == "UNIT_MAXHEALTH" then
 		-- only the overheal gate (raid markers, target icon glow) uses health
 		if event == "UNIT_MAXHEALTH" and ValidUnit(arg1) then ns.Overheal.UpdateUnit(arg1) end
 		if ns.db.overlay.noOverheal and ValidUnit(arg1) then
-			ns.Frames:RefreshUnit(arg1)
+			ns.Frames:UpdateHealth(arg1)
 		end
 		if (arg1 == "target" or arg1 == "player") and ns.db.icon.overhealGlow then
 			ns.Icon:Refresh()
@@ -393,6 +411,7 @@ events:SetScript("OnEvent", function(self, event, arg1, arg2, arg3)
 		Call("UpdateCooldown")
 	elseif event == "SPELLS_CHANGED" then
 		-- fires on every shapeshift; the raid frames don't change, so no scan
+		Call("SpellsChanged")
 		ns.RefreshAll()
 	else
 		-- roster/zone/combat changes: look for new raid frames, then redraw

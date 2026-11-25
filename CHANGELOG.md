@@ -1,5 +1,16 @@
 # Swiftmender Forever
 
+## 1.10.2
+
+- Performance: much less work in raids (about 9x fewer game API calls in a simulated 40-player raid).
+  - Aura changes no longer redraw the raid frames (the native markers handle themselves), and the target
+    icon only updates for your target and you.
+  - Health changes only update the overheal check of that player's frames.
+  - The periodic update does a full raid-frame pass once a second (or when Swiftmend's cooldown starts
+    or ends) instead of four times a second.
+  - The Swiftmend spell lookup is cached, the countdown driver sleeps when no timer shows, and hidden or
+    disabled raid frames don't build countdown buttons.
+
 ## 1.10.1
 
 - Fixed the raid-marker timer randomly switching back to the icon and counting inaccurately in combat.

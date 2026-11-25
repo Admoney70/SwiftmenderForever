@@ -229,10 +229,16 @@ function Frames.CooldownStyle()
 end
 
 -- Whole seconds left (rounded up), or nil when unknown.
+-- (Cached per frame: GetTime() doesn't change within one.)
+local secondsAt, secondsLeft
 local function SecondsLeft()
-	local left = ns.Icon.SwiftmendRemaining()
-	if not left then return end
-	return math.max(1, math.ceil(left))
+	local now = GetTime()
+	if secondsAt ~= now then
+		secondsAt = now
+		local left = ns.Icon.SwiftmendRemaining()
+		secondsLeft = left and math.max(1, math.ceil(left)) or nil
+	end
+	return secondsLeft
 end
 
 -- How many number sensors a frame needs.
@@ -372,13 +378,19 @@ end
 
 -- Steps every shown countdown a few times a second.
 local shownTimers = {}
+-- (The driver frame is hidden, so its OnUpdate doesn't run, while no
+-- countdown shows.)
 local ticker = CreateFrame("Frame")
 ticker.elapsed = 0
+ticker:Hide()
 ticker:SetScript("OnUpdate", function(self, elapsed)
 	self.elapsed = self.elapsed + elapsed
 	if self.elapsed < 0.1 then return end
 	self.elapsed = 0
-	if not next(shownTimers) then return end
+	if not next(shownTimers) then
+		self:Hide()
+		return
+	end
 	local n = SecondsLeft()
 	if not n then
 		Frames:Refresh()
@@ -445,6 +457,7 @@ function Frames:Attach(frame, provider)
 	local o = CreateOverlay(frame, provider)
 	if o then
 		overlays[frame] = o
+		o.frame = frame
 		if previewing then LayoutPreview(o) end
 		self:UpdateFrame(frame)
 	end
@@ -510,6 +523,7 @@ local function ApplyTimer(o)
 	if active then
 		ShowSecond(o, seconds)
 		shownTimers[o] = true
+		ticker:Show()
 	else
 		shownTimers[o] = nil
 	end
@@ -525,21 +539,24 @@ end
 function Frames:UpdateFrame(frame)
 	local o = overlays[frame]
 	if not o then return end
-	ApplyFade(o, ApplyTimer(o))
 	local enabled = ns.db.overlay[o.provider]
 	local unit = enabled and frame:IsVisible() and FrameUnit(frame)
+	o.curUnit = unit or nil
 	if not unit then
+		-- hidden or disabled: no countdown work (or number sensors) for it
+		shownTimers[o] = nil
 		o:Hide()
 		return
 	end
+	ApplyFade(o, ApplyTimer(o))
 	if o.sensor then
 		-- the native button shows itself; we only follow unit changes
 		if unit ~= o.smUnit then
 			o.smUnit = unit
 			ns.Native.SetUnit(o.sensor, unit)
 			for _, sensor in pairs(o.numSensors or {}) do ns.Native.SetUnit(sensor, unit) end
+			ns.Overheal.UpdateUnit(unit) -- caches max health for the fallback
 		end
-		ns.Overheal.UpdateUnit(unit) -- caches max health for the fallback
 		ns.Overheal.UpdateGate(o.gate, unit, ns.db.overlay.noOverheal, 1)
 		o:Show()
 		return
@@ -727,9 +744,34 @@ function Frames:Init()
 	C_Timer.After(2, function() Frames:ScanNow() end)
 end
 
+local lastFull = 0
 function Frames:Refresh()
+	lastFull = GetTime()
 	onCooldown = ns.Icon.SwiftmendOnCooldown()
 	for frame in pairs(overlays) do self:UpdateFrame(frame) end
+end
+
+-- The periodic tick: a full pass only when Swiftmend's cooldown state
+-- changed, or once a second as a safety net. Units, health and auras are
+-- event-driven, and the countdown has its own driver.
+function Frames:Tick()
+	if ns.Icon.SwiftmendOnCooldown() ~= onCooldown or GetTime() - lastFull >= 1 then
+		self:Refresh()
+	end
+end
+
+-- UNIT_HEALTH: only the overheal gate depends on it.
+function Frames:UpdateHealth(unit)
+	if not ns.db.overlay.noOverheal then return end
+	for _, o in pairs(overlays) do
+		if o.curUnit == unit then
+			if o.gate then
+				ns.Overheal.UpdateGate(o.gate, unit, true, 1)
+			else
+				self:UpdateFrame(o.frame)
+			end
+		end
+	end
 end
 
 function Frames:UpdateCooldown()
@@ -737,8 +779,8 @@ function Frames:UpdateCooldown()
 end
 
 function Frames:RefreshUnit(unit)
-	for frame in pairs(overlays) do
-		if FrameUnit(frame) == unit then self:UpdateFrame(frame) end
+	for frame, o in pairs(overlays) do
+		if o.curUnit == unit then self:UpdateFrame(frame) end
 	end
 end
 
